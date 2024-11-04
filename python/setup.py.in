@@ -1,0 +1,51 @@
+from numpy.distutils.core import setup
+from numpy.distutils.core import Extension
+
+################################################################################
+# Reused compiler arguments
+
+include_dirs = ['${CMAKE_Fortran_MODULE_DIRECTORY}',
+        '/usr/include',
+        '/usr/local/include',
+        '${CMAKE_INSTALL_PREFIX}/include'
+        ]
+extra_f90_compile_args='${CMAKE_Fortran_FLAGS}'.split()
+library_dirs=['${CMAKE_LIBRARY_OUTPUT_DIRECTORY}']
+extra_link_args='${lib_line}'.split()
+extra_link_args += ['-lgomp']
+extra_link_args += ['-ltiktaalik']
+
+kwargs = {
+        'include_dirs'           : include_dirs,
+        'extra_f90_compile_args' : extra_f90_compile_args,
+        'library_dirs'           : library_dirs,
+        'extra_link_args'        : extra_link_args
+        }
+
+################################################################################
+# The actual modules
+
+ext_qcd = Extension(name = 'qcd_wrap',
+        sources = ['${CMAKE_CURRENT_SOURCE_DIR}/qcd.f90'],
+        **kwargs
+        )
+
+ext_matrices = Extension(name = 'matrices_wrap',
+        sources = ['${CMAKE_CURRENT_SOURCE_DIR}/matrices.f90'],
+        **kwargs
+        )
+
+ext_model = Extension(name = 'model_wrap',
+        sources = ['${CMAKE_CURRENT_SOURCE_DIR}/model.f90'],
+        **kwargs
+        )
+
+################################################################################
+# Installation
+
+setup(name='tiktaalik',
+      version='${PACKAGE_VERSION}',
+      package_dir={ '': '${CMAKE_CURRENT_SOURCE_DIR}'},
+      packages=['tiktaalik'],
+      ext_modules=[ext_qcd,ext_matrices,ext_model]
+      )

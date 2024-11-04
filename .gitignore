@@ -1,0 +1,47 @@
+# Editor backup files
+*.swp
+*.swo
+.*.swo
+.*.swp
+*~
+
+# Python build/run files
+*.pyc
+*__pycache__
+build/
+dist/
+setuptools
+
+# Numpy output
+*.npy
+
+# Fortran build files
+*.o
+*.so
+*.a
+*.mod
+
+# Latex-generated
+*.bbl
+*.log
+*.aux
+*.blg
+*.out
+*Notes.bib
+*.fls
+*.fdb_latexmk
+*.dvi
+*.eps
+*.pdf
+*.loc
+*.soc
+
+# Images
+*.png
+*.jpg
+*.gif
+
+# Products of local tests
+*.csv
+*.pkl
+*.npy
