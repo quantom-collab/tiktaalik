@@ -139,6 +139,9 @@ module matevo
         real(dp) :: al2pi
         al2pi = get_alpha_QCD(Q2) / (2.*pi)
         K = al2pi * KV_SG_0(1:nx,nx+1:2*nx,:,nfl)
+        if(l_nlo) then
+          K = K + al2pi**2 * KV_SG_1(1:nx,nx+1:2*nx,:,nfl)
+        endif
     end function kernel_V_QG
 
     function kernel_V_GQ(Q2, nx, nxi, nfl, l_nlo) result(K)
@@ -162,6 +165,9 @@ module matevo
         real(dp) :: al2pi
         al2pi = get_alpha_QCD(Q2) / (2.*pi)
         K = al2pi * KV_SG_0(nx+1:2*nx,nx+1:2*nx,:,nfl)
+        if(l_nlo) then
+          K = K + al2pi**2 * KV_SG_1(nx+1:2*nx,nx+1:2*nx,:,nfl)
+        endif
     end function kernel_V_GG
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -305,15 +311,18 @@ module matevo
     subroutine make_kernels_SG_1(nx, nxi)
         integer, intent(in) :: nx, nxi
         integer :: ix, iy, iz, nfl
-        real(dp), dimension(:,:,:), allocatable :: Gq_nfl_0, Gq_nfl_1
+        real(dp), dimension(:,:,:), allocatable :: qG_nfl_1, Gq_nfl_0, Gq_nfl_1, GG_nfl_0, GG_nfl_1
         ! TODO : the rest
         if(allocated(KA_SG_1)) deallocate(KA_SG_1)
         if(allocated(KV_SG_1)) deallocate(KV_SG_1)
         allocate(KA_SG_1(2*nx,2*nx,nxi,nfl_min:nfl_max))
         allocate(KV_SG_1(2*nx,2*nx,nxi,nfl_min:nfl_max))
         ! Temporary sub-matrix arrays ...  TODO: the rest
+        allocate(qG_nfl_1(nx,nx,nxi))
         allocate(Gq_nfl_0(nx,nx,nxi))
         allocate(Gq_nfl_1(nx,nx,nxi))
+        allocate(GG_nfl_0(nx,nx,nxi))
+        allocate(GG_nfl_1(nx,nx,nxi))
         KA_SG_1 = 0.0_dp
         KV_SG_1 = 0.0_dp
         ! Currently testing with one type of kernel
@@ -321,14 +330,19 @@ module matevo
         do ix=1, nx, 1
           do iy=1, nx, 1
             do iz=1, nxi, 1
-              Gq_nfl_0(ix,iy,iz) = pixel_conv(KV1_Gq_reg,     zero_func,  zero_func,  xi_cache(iz), nx, ix, iy)
-              Gq_nfl_1(ix,iy,iz) = pixel_conv(KV1_Gq_reg_nfl, zero_func,  zero_func,  xi_cache(iz), nx, ix, iy)
+              qG_nfl_1(ix,iy,iz) = pixel_conv(KV1_qG_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
+              Gq_nfl_0(ix,iy,iz) = pixel_conv(KV1_Gq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
+              Gq_nfl_1(ix,iy,iz) = pixel_conv(KV1_Gq_reg_nfl, zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
+              GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,      KV1_GG_pls,     KV1_GG_cst,     xi_cache(iz), nx, ix, iy)
+              GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,      KV1_GG_pls_nfl, KV1_GG_cst_nfl, xi_cache(iz), nx, ix, iy)
             end do
           end do
         end do
         ! boop (TODO)
         do nfl=nfl_min, nfl_max, 1
+          KV_SG_1(1:nx,     nx+1:2*nx,:,nfl) = real(nfl)*qG_nfl_1(:,:,:)
           KV_SG_1(nx+1:2*nx,1:nx,     :,nfl) = Gq_nfl_0(:,:,:) + real(nfl)*Gq_nfl_1(:,:,:)
+          KV_SG_1(nx+1:2*nx,nx+1:2*nx,:,nfl) = GG_nfl_0(:,:,:) + real(nfl)*GG_nfl_1(:,:,:)
         end do
         ! And we're done
         deallocate(Gq_nfl_0)

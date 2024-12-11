@@ -150,6 +150,36 @@ module kernels_common
         f = X/Y**2 * (2.0_dp*Xbar*Y - X)
     end function QG_f_c
 
+    function QG_h_V(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, QGfV, QGfVbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74), (75)
+        QGfV    = -QG_f_a(X   ,Y)    - 2.*QG_f_c(X   ,Y   )
+        QGfVbar = -QG_f_a(Xbar,Ybar) - 2.*QG_f_c(Xbar,Ybar)
+        h = -2.*QGfVbar*logprod(Xbar,Y) - 2.*QGfV*(li2(X) + li2(Ybar))
+    end function QG_h_V
+
+    function QG_hbar_V(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, QGfV, QGfVbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74), (75)
+        QGfV    = -QG_f_a(X   ,Y)    - 2.*QG_f_c(X   ,Y   )
+        QGfVbar = -QG_f_a(Xbar,Ybar) - 2.*QG_f_c(Xbar,Ybar)
+        h = (QGfVbar + QGfV)*(2.*li2(1.-X/Y) + log2(Y)) &
+            & + 2.*QGfV*(li2(Ybar) - logprod(X,Y)) &
+            & - 2.*QGfVbar*li2(Xbar)
+    end function QG_hbar_V
+
     ! GQ
 
     function GQ_f_a(X,Y) result(f)
@@ -233,5 +263,34 @@ module kernels_common
         Xbar = 1.0_dp - X
         f = X**2/Y**2 * (2.0_dp*Xbar*Y + Y - X)
     end function GG_f_c
+
+    function GG_h_V(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, GGf, GGfbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74) and (75)
+        GGf    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   ) + 2.*GG_f_c(X   ,Y   )
+        GGfbar = 2.*GG_f_a(Xbar,Ybar) + GG_f_b(Xbar,Ybar) + 2.*GG_f_c(Xbar,Ybar)
+        h = 2.*GGfbar*logprod(Xbar,Y) - 2.*GGf*(li2(X) + li2(Ybar))
+    end function GG_h_V
+
+    function GG_hbar_V(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, GGf, GGfbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        GGf    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   ) + 2.*GG_f_c(X   ,Y   )
+        GGfbar = 2.*GG_f_a(Xbar,Ybar) + GG_f_b(Xbar,Ybar) + 2.*GG_f_c(Xbar,Ybar)
+        h = (-GGfbar + GGf)*(2.*li2(1.-X/Y) + log2(Y)) &
+            & + 2.*GGf*(li2(Ybar) - logprod(X,Y)) &
+            & + 2.*GGfbar*li2(Xbar)
+    end function GG_hbar_V
 
 end module kernels_common
