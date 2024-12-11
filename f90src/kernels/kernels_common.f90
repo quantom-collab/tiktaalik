@@ -13,6 +13,8 @@
 !   arxiv:hep-ph/9912379
 
 module kernels_common
+  use constants, only: pi
+  use specfun,   only: dilog
 
   implicit none
   public
@@ -59,14 +61,43 @@ module kernels_common
     end function erbl_step
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ! Functions taking strictly positive arguments
+    ! Convenience functions for dealing with logs of negative values
 
     function abslog(x) result(y)
+        ! log of absolute value
+        ! Convenient for removing imaginary parts
         real(dp), intent(in) :: x
         real(dp) :: y
         !
         y = log(abs(x))
     end function abslog
+
+    function log2(x) result(y)
+        ! Square of log
+        ! Removes imaginary part, accounts for -pi**2 in real part
+        real(dp), intent(in) :: x
+        real(dp) :: y
+        !
+        y = log(abs(x))**2
+        if(x < 0.0_dp) y = y - pi**2
+    end function log2
+
+    function logprod(x1, x2) result(y)
+        ! Product of two logs
+        ! Removes imaginary part, accounts for -pi**2 in real part
+        real(dp), intent(in) :: x1, x2
+        real(dp) :: y
+        !
+        y = log(abs(x1)) * log(abs(x2))
+        if(x1 < 0.0_dp .and. x2 < 0.0_dp) y = y - pi**2
+    end function logprod
+
+    function li2(x) result(y)
+        real(dp), intent(in) :: x
+        real(dp) :: y
+        !
+        y = dilog(x)
+    end function li2
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Small pieces of the BFM kernels
@@ -139,6 +170,41 @@ module kernels_common
         Ybar = 1.0_dp - Y
         f = X**2/Y * (2.0_dp*Xbar*Y - Ybar)
     end function GQ_f_c
+
+    function GQ_h_V(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, GQfV, GQfVbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74), (75)
+        GQfV    = GQ_f_a(X   ,Y)    + 2.*GQ_f_c(X   ,Y   )
+        GQfVbar = GQ_f_a(Xbar,Ybar) + 2.*GQ_f_c(Xbar,Ybar)
+        h = -2.*GQfVbar*logprod(Xbar,Y) - 2.*GQfV*(li2(X) + li2(Ybar))
+    end function GQ_h_V
+
+    function GQ_hbar_V(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, GQfV, GQfVbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74), (75)
+        GQfV    = GQ_f_a(X   ,Y)    + 2.*GQ_f_c(X   ,Y   )
+        GQfVbar = GQ_f_a(Xbar,Ybar) + 2.*GQ_f_c(Xbar,Ybar)
+        ! What's literally written
+        h = (GQfVbar + GQfV)*(2.*li2(1.-X/Y) + log2(Y)) &
+            & + 2.*GQfV*(li2(Ybar) - logprod(X,Y)) &
+            & - 2.*GQfVbar*li2(Xbar)
+        ! My guess at what they meant?
+        !h = (GQfVbar + GQfV)*(2.*li2(1.-Xbar/Y) + log2(Y)) &
+        !    & + 2.*GQfV*(li2(Ybar) - logprod(Xbar,Y)) &
+        !    & - 2.*GQfVbar*li2(X)
+    end function GQ_hbar_V
 
     ! GG
 
