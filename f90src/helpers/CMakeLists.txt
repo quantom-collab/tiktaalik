@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 set(localfiles
   "integration"
   "pixelation"
+  "specfun"
   )
 
 set(localsources ${localfiles})
