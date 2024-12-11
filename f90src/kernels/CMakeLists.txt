@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 set(localfiles
   "kernels_common"
   "kernels_lo"
+  "kernels_nlo"
   )
 
 set(localsources ${localfiles})
