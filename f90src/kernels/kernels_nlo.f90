@@ -19,8 +19,8 @@
 ! have been separated. (TODO)
 
 module kernels_nlo
-  use constants,      only: CF, CA, TF, pi, zeta2
-  use integration,    only: integrate
+  use constants,      only: CF, CA, TF, pi, zeta2, zeta3
+  use integration,    only: integrate, integrate2
   use kernels_common
 
   implicit none
@@ -30,16 +30,253 @@ module kernels_nlo
 
   real(dp), parameter, private :: eps = 1e-9_dp
 
-  public :: KV1_qG_reg, KV1_Gq_reg, KV1_Gq_reg_nfl, &
+  public :: KV1_NSp_pls, KV1_NSp_cst, KV1_NSp_pls_nfl, KV1_NSp_cst_nfl, &
+      & KV1_NSm_pls, KV1_NSm_cst, KV1_NSm_pls_nfl, KV1_NSm_cst_nfl, &
+      & KV1_qq_reg, &
+      & KV1_qG_reg, KV1_Gq_reg, KV1_Gq_reg_nfl, &
       KV1_GG_cst, KV1_GG_pls, KV1_GG_cst_nfl, KV1_GG_pls_nfl
   ! TODO : the rest
 
   contains
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ! qq kernel pieces
+    ! qq kernel pieeces: nfl-independent terms
 
-    ! TODO
+    function KV1_NSp_pls(x, y, xi) result(K)
+        ! Eq. (177)
+        ! Plus-type, plus distribution piece
+        real(dp), intent(in) :: x, y, xi
+        real(dp) :: K
+        !
+        real(dp) :: X1, X2, Y1, Y2
+        X1 = 0.5*(1.+x/xi)
+        X2 = 0.5*(1.-x/xi)
+        Y1 = 0.5*(1.+y/xi)
+        Y2 = 0.5*(1.-y/xi)
+        K = KV1_qq_half(X1,Y1,X2,Y2,1.0_dp) + KV1_qq_half(X2,Y2,X1,Y1,1.0_dp)
+        K = 0.5*K/xi
+    end function KV1_NSp_pls
+
+    function KV1_NSp_cst(x, xi) result(K)
+        ! Eq. (177)
+        ! Plus-type, constant term
+        real(dp), intent(in) :: x, xi
+        real(dp) :: K
+        !
+        ! Explicit term in Eq. (177)
+        K = CF*(CF - 0.5*CA)*(6.5-6.*zeta2+4.*zeta3)
+        ! From plus prescription
+        K = K + integrate2(integrand, x, xi)
+        return
+        contains
+          function integrand(y) result(intd)
+              real(dp), intent(in) :: y
+              real(dp) :: intd
+              !
+              intd = KV1_NSp_pls(x,y,xi) - KV1_NSp_pls(y,x,xi)
+          end function integrand
+    end function KV1_NSp_cst
+
+    function KV1_NSm_pls(x, y, xi) result(K)
+        ! Eq. (177)
+        ! Minus-type, plus distribution piece
+        real(dp), intent(in) :: x, y, xi
+        real(dp) :: K
+        !
+        real(dp) :: X1, X2, Y1, Y2
+        X1 = 0.5*(1.+x/xi)
+        X2 = 0.5*(1.-x/xi)
+        Y1 = 0.5*(1.+y/xi)
+        Y2 = 0.5*(1.-y/xi)
+        K = KV1_qq_half(X1,Y1,X2,Y2,-1.0_dp) + KV1_qq_half(X2,Y2,X1,Y1,-1.0_dp)
+        K = 0.5*K/xi
+    end function KV1_NSm_pls
+
+    function KV1_NSm_cst(x, xi) result(K)
+        ! Eq. (177)
+        ! Minus-type, constant term
+        real(dp), intent(in) :: x, xi
+        real(dp) :: K
+        !
+        ! Constant only from plus prescription
+        K = integrate2(integrand, x, xi)
+        return
+        contains
+          function integrand(y) result(intd)
+              real(dp), intent(in) :: y
+              real(dp) :: intd
+              !
+              intd = KV1_NSm_pls(x,y,xi) - KV1_NSm_pls(y,x,xi)
+          end function integrand
+    end function KV1_NSm_cst
+
+    function KV1_qq_half(X, Y, Xbar, Ybar, zsign) result(K)
+        ! Eq. (177)
+        real(dp), intent(in) :: X, Y, Xbar, Ybar, zsign
+        real(dp) :: K
+        !
+        real(dp) :: QQf, QQfbar, QQh, QQhbar, beta0
+        real(dp) :: piece1, piece2, piece3, piece4
+        K = 0.0_dp
+        ! Some conditions to avoid nans
+        if(abs(X-Y)  < eps) return
+        if(abs(Y)    < eps) return
+        if(abs(Ybar) < eps) return
+        if(abs(X)    < eps) return
+        if(abs(Xbar) < eps) return
+        ! Auxiliary quantities
+        QQf    = QQ_f_a(X   ,Y)    + QQ_f_b(X   ,Y   )
+        QQfbar = QQ_f_a(Xbar,Ybar) + QQ_f_b(Xbar,Ybar)
+        QQh = QQ_h(X,Y)
+        QQhbar = QQ_hbar(Xbar,Y)
+        beta0 = -11./3.*CA
+        ! pieces 1-3 have support in both the ERBL and DLGAP regions
+        piece1 = CF**2*( (4./3.-2.*zeta2)*QQf + 3.*X/Y &
+            & - (1.5*QQf-0.5*X/Ybar)*abslog(X/Y) &
+            & - (QQf-QQfbar)*logprod(X/Y,1.-X/Y) &
+            & + (QQf + 0.5*X/Ybar)*log2(X/Y) )
+        piece2 = -0.5*CF*beta0*( 5./3.*QQf + X/Y + QQf*abslog(X/Y) )
+        piece3 = - CF*(CF - 0.5*CA)*( 4./3.*QQf + 2.*X/Y + QQh - zsign*QQhbar )
+        ! piece 4 only has support in the ERBL region
+        piece4 = -0.5*X/Ybar*(abslog(X) + log2(X) - 2.*logprod(X,Xbar))*CF**2
+        ! Factor in the support regions
+        piece1 = piece1*rho_step(X,Y)
+        piece2 = piece2*rho_step(X,Y)
+        piece3 = piece3*rho_step(X,Y)
+        piece4 = piece4*erbl_step(X)
+        K = piece1 + piece2 + piece3 + piece4
+    end function KV1_qq_half
+
+    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ! qq kernel pieces: terms linear in nfl
+
+    function KV1_NSp_pls_nfl(x, y, xi) result(K)
+        ! Eq. (177)
+        ! Plus-type, plus distribution piece
+        real(dp), intent(in) :: x, y, xi
+        real(dp) :: K
+        !
+        real(dp) :: X1, X2, Y1, Y2
+        X1 = 0.5*(1.+x/xi)
+        X2 = 0.5*(1.-x/xi)
+        Y1 = 0.5*(1.+y/xi)
+        Y2 = 0.5*(1.-y/xi)
+        K = KV1_qq_half_nfl(X1,Y1,X2,Y2,1.0_dp) + KV1_qq_half_nfl(X2,Y2,X1,Y1,1.0_dp)
+        K = 0.5*K/xi
+    end function KV1_NSp_pls_nfl
+
+    function KV1_NSp_cst_nfl(x, xi) result(K)
+        ! Eq. (177)
+        ! Plus-type, constant term
+        real(dp), intent(in) :: x, xi
+        real(dp) :: K
+        !
+        ! From plus prescription
+        K = integrate2(integrand, x, xi)
+        return
+        contains
+          function integrand(y) result(intd)
+              real(dp), intent(in) :: y
+              real(dp) :: intd
+              !
+              intd = KV1_NSp_pls_nfl(x,y,xi) - KV1_NSp_pls_nfl(y,x,xi)
+          end function integrand
+    end function KV1_NSp_cst_nfl
+
+    function KV1_NSm_pls_nfl(x, y, xi) result(K)
+        ! Eq. (177)
+        ! Minus-type, plus distribution piece
+        real(dp), intent(in) :: x, y, xi
+        real(dp) :: K
+        !
+        real(dp) :: X1, X2, Y1, Y2
+        X1 = 0.5*(1.+x/xi)
+        X2 = 0.5*(1.-x/xi)
+        Y1 = 0.5*(1.+y/xi)
+        Y2 = 0.5*(1.-y/xi)
+        K = KV1_qq_half_nfl(X1,Y1,X2,Y2,-1.0_dp) + KV1_qq_half_nfl(X2,Y2,X1,Y1,-1.0_dp)
+        K = 0.5*K/xi
+    end function KV1_NSm_pls_nfl
+
+    function KV1_NSm_cst_nfl(x, xi) result(K)
+        ! Eq. (177)
+        ! Minus-type, constant term
+        real(dp), intent(in) :: x, xi
+        real(dp) :: K
+        !
+        ! Constant only from plus prescription
+        K = integrate2(integrand, x, xi)
+        return
+        contains
+          function integrand(y) result(intd)
+              real(dp), intent(in) :: y
+              real(dp) :: intd
+              !
+              intd = KV1_NSm_pls_nfl(x,y,xi) - KV1_NSm_pls_nfl(y,x,xi)
+          end function integrand
+    end function KV1_NSm_cst_nfl
+
+    function KV1_qq_half_nfl(X, Y, Xbar, Ybar, zsign) result(K)
+        ! Eq. (177)
+        real(dp), intent(in) :: X, Y, Xbar, Ybar, zsign
+        real(dp) :: K
+        !
+        real(dp) :: QQf, QQfbar, QQh, QQhbar, beta0
+        !!!real(dp) :: piece1, piece2, piece3, piece4
+        K = 0.0_dp
+        ! Some conditions to avoid nans
+        if(abs(X-Y)  < eps) return
+        if(abs(Y)    < eps) return
+        if(abs(Ybar) < eps) return
+        if(abs(X)    < eps) return
+        if(abs(Xbar) < eps) return
+        ! Auxiliary quantities
+        QQf    = QQ_f_a(X   ,Y)    + QQ_f_b(X   ,Y   )
+        QQfbar = QQ_f_a(Xbar,Ybar) + QQ_f_b(Xbar,Ybar)
+        QQh = QQ_h(X,Y)
+        QQhbar = QQ_hbar(Xbar,Y)
+        beta0 = 4./3.*TF
+        K = -0.5*CF*beta0*( 5./3.*QQf + X/Y + QQf*abslog(X/Y) )
+        K = K*rho_step(X,Y)
+    end function KV1_qq_half_nfl
+
+    function KV1_qq_reg(x, y, xi) result(K)
+        ! Note: the singelt QQ kernel is the plus-type NS kernel plus this!
+        real(dp), intent(in) :: x, y, xi
+        real(dp) :: K
+        !
+        real(dp) :: X1, X2, Y1, Y2
+        X1 = 0.5*(1.+x/xi)
+        X2 = 0.5*(1.-x/xi)
+        Y1 = 0.5*(1.+y/xi)
+        Y2 = 0.5*(1.-y/xi)
+        K = KV1_qq_half_sin(X1,Y1) + KV1_qq_half_sin(X2,Y2)
+        K = 0.5*K/xi
+    end function KV1_qq_reg
+
+    function KV1_qq_half_sin(X, Y) result(K)
+        ! Entire thing needs to be multiplied by nfl
+        real(dp), intent(in) :: X, Y
+        real(dp) :: K
+        !
+        real(dp) :: piece1, piece2
+        real(dp) :: Xbar, Ybar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! piece 1 has support in both ERBL and DGLAP regions
+        piece1 = X*(3.-8.*X*Ybar)/Y + X*(5.-8.*X)/Ybar*abslog(X/Y) &
+            & + (X/Ybar - 4.*X*Xbar)*log2(X/Y) &
+            & + 8.*X*Xbar*(li2(Xbar) - li2(Ybar) + logprod(Xbar,Y))
+        ! piece 2 only has support in the ERBL region
+        piece2 = -290./9.*X*Xbar &
+            & - (X*(5.-8.*X)/Ybar + 2.*X*(9.-19.*Xbar)/3.)*abslog(X) &
+            & - (X/Ybar - 4.*X*Xbar)*log2(X) &
+            & + 4.*X*Xbar*logprod(X,Xbar)
+        ! Factor in the support regions
+        piece1 = piece1*rho_step(X,Y)
+        piece2 = piece2*erbl_step(X)
+        K = 2.*CF*TF*(piece1 + piece2)
+    end function KV1_qq_half_sin
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! qG kernel pieces

@@ -38,8 +38,8 @@ module matevo
   ! LO
   real(dp), allocatable, dimension(:,:,:,:) :: K_NS_0, KV_SG_0, KA_SG_0
   ! NLO
-  real(dp), allocatable, dimension(:,:,:,:) :: KV_NS_1p, KV_NS_1m, KV_NS_1s, &
-      & KA_NS_1p, KA_NS_1m, KA_NS_1s, KV_SG_1, KA_SG_1
+  real(dp), allocatable, dimension(:,:,:,:) :: KV_NS_1p, KV_NS_1m, &
+      & KA_NS_1p, KA_NS_1m, KV_SG_1, KA_SG_1
 
   ! In evolution matrices, indices are for (x,y,xi,Q2)
   ! For singlet/gluon, the first two indices go up to 2*nx,
@@ -129,6 +129,16 @@ module matevo
         real(dp) :: al2pi
         al2pi = get_alpha_QCD(Q2) / (2.*pi)
         K = al2pi * K_NS_0(:,:,:,nfl)
+        if(l_nlo) then
+          select case(i_ns_type)
+          case(1)
+            K = K + al2pi**2 * KV_NS_1p(:,:,:,nfl)
+          case(-1)
+            K = K + al2pi**2 * KV_NS_1m(:,:,:,nfl)
+          case(0)
+            K = K + al2pi**2 * KV_SG_1(1:nx,1:nx,:,nfl)
+          end select
+        endif
     end function kernel_V_QQ
 
     function kernel_V_QG(Q2, nx, nxi, nfl, l_nlo) result(K)
@@ -220,27 +230,62 @@ module matevo
     subroutine make_kernels_NS_1(nx, nxi)
         ! TODO
         integer, intent(in) :: nx, nxi
-        integer :: ix, iy, iz, nfl
+        !integer :: ix, iy, iz, nfl
         if(allocated(KV_NS_1p)) deallocate(KV_NS_1p)
         if(allocated(KV_NS_1m)) deallocate(KV_NS_1m)
-        if(allocated(KV_NS_1s)) deallocate(KV_NS_1s)
+        !!!if(allocated(KV_NS_1s)) deallocate(KV_NS_1s)
         if(allocated(KA_NS_1p)) deallocate(KA_NS_1p)
         if(allocated(KA_NS_1m)) deallocate(KA_NS_1m)
-        if(allocated(KA_NS_1s)) deallocate(KA_NS_1s)
+        !!!if(allocated(KA_NS_1s)) deallocate(KA_NS_1s)
         allocate(KV_NS_1p(nx,nx,nxi,nfl_min:nfl_max))
         allocate(KV_NS_1m(nx,nx,nxi,nfl_min:nfl_max))
-        allocate(KV_NS_1s(nx,nx,nxi,nfl_min:nfl_max))
+        !!!allocate(KV_NS_1s(nx,nx,nxi,nfl_min:nfl_max))
         allocate(KA_NS_1p(nx,nx,nxi,nfl_min:nfl_max))
         allocate(KA_NS_1m(nx,nx,nxi,nfl_min:nfl_max))
-        allocate(KA_NS_1s(nx,nx,nxi,nfl_min:nfl_max))
+        !!!allocate(KA_NS_1s(nx,nx,nxi,nfl_min:nfl_max))
         ! TODO ... just zeroes as placeholds for now ...
-        KV_NS_1p = 0.0_dp
-        KV_NS_1m = 0.0_dp
-        KV_NS_1s = 0.0_dp
+        !!!KV_NS_1p = 0.0_dp
+        !!!KV_NS_1m = 0.0_dp
+        !!!KV_NS_1s = 0.0_dp
         KA_NS_1p = 0.0_dp
         KA_NS_1m = 0.0_dp
-        KA_NS_1s = 0.0_dp
+        !!!KA_NS_1s = 0.0_dp
+        call make_one_nlo_ns_kernel(nx, nxi, &
+            & zero_func, KV1_NSp_pls, KV1_NSp_cst, zero_func, KV1_NSp_pls_nfl, KV1_NSp_cst_nfl, &
+            & KV_NS_1p)
+        call make_one_nlo_ns_kernel(nx, nxi, &
+            & zero_func, KV1_NSm_pls, KV1_NSm_cst, zero_func, KV1_NSm_pls_nfl, KV1_NSm_cst_nfl, &
+            & KV_NS_1m)
+        !!!call make_one_nlo_ns_kernel(nx, nxi, &
+            !!!& zero_func, zero_func, zero_func, KV1_qq_reg, zero_func, zero_func, &
+            !!!& KV_NS_1s)
+        !!!KV_NS_1s
     end subroutine make_kernels_NS_1
+
+    subroutine make_one_nlo_ns_kernel(nx, nxi, freg0, fpls0, fcst0, freg1, fpls1, fcst1, kernel)
+        integer, intent(in)   :: nx, nxi
+        real(dp), intent(out) :: kernel(nx,nx,nxi,nfl_min:nfl_max)
+        real(dp), external :: freg0, fpls0, fcst0, freg1, fpls1, fcst1
+        integer :: ix, iy, iz, nfl
+        real(dp), allocatable, dimension(:,:,:,:) :: k0, k1
+        allocate(k0(nx,nx,nxi,nfl_min:nfl_max))
+        allocate(k1(nx,nx,nxi,nfl_min:nfl_max))
+        !$OMP PARALLEL DO
+        do ix=1, nx, 1
+          do iy=1, nx, 1
+            do iz=1, nxi, 1
+              k0(ix,iy,iz,:) = pixel_conv(freg0, fpls0, fcst0, xi_cache(iz), nx, ix, iy)
+              k1(ix,iy,iz,:) = pixel_conv(freg1, fpls1, fcst1, xi_cache(iz), nx, ix, iy)
+            end do
+          end do
+        end do
+        !$OMP END PARALLEL DO
+        do nfl=nfl_min, nfl_max, 1
+          k1(:,:,:,nfl) = k1(:,:,:,nfl) * real(nfl)
+        end do
+        kernel = k0 + k1
+        deallocate(k0, k1)
+    end subroutine make_one_nlo_ns_kernel
 
     subroutine make_kernels_SG_0(nx, nxi)
         integer, intent(in) :: nx, nxi
@@ -311,13 +356,14 @@ module matevo
     subroutine make_kernels_SG_1(nx, nxi)
         integer, intent(in) :: nx, nxi
         integer :: ix, iy, iz, nfl
-        real(dp), dimension(:,:,:), allocatable :: qG_nfl_1, Gq_nfl_0, Gq_nfl_1, GG_nfl_0, GG_nfl_1
+        real(dp), dimension(:,:,:), allocatable :: qq_nfl_1, qG_nfl_1, Gq_nfl_0, Gq_nfl_1, GG_nfl_0, GG_nfl_1
         ! TODO : the rest
         if(allocated(KA_SG_1)) deallocate(KA_SG_1)
         if(allocated(KV_SG_1)) deallocate(KV_SG_1)
         allocate(KA_SG_1(2*nx,2*nx,nxi,nfl_min:nfl_max))
         allocate(KV_SG_1(2*nx,2*nx,nxi,nfl_min:nfl_max))
         ! Temporary sub-matrix arrays ...  TODO: the rest
+        allocate(qq_nfl_1(nx,nx,nxi))
         allocate(qG_nfl_1(nx,nx,nxi))
         allocate(Gq_nfl_0(nx,nx,nxi))
         allocate(Gq_nfl_1(nx,nx,nxi))
@@ -325,11 +371,11 @@ module matevo
         allocate(GG_nfl_1(nx,nx,nxi))
         KA_SG_1 = 0.0_dp
         KV_SG_1 = 0.0_dp
-        ! Currently testing with one type of kernel
         !$OMP PARALLEL DO
         do ix=1, nx, 1
           do iy=1, nx, 1
             do iz=1, nxi, 1
+              qq_nfl_1(ix,iy,iz) = pixel_conv(KV1_qq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
               qG_nfl_1(ix,iy,iz) = pixel_conv(KV1_qG_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
               Gq_nfl_0(ix,iy,iz) = pixel_conv(KV1_Gq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
               Gq_nfl_1(ix,iy,iz) = pixel_conv(KV1_Gq_reg_nfl, zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
@@ -338,12 +384,16 @@ module matevo
             end do
           end do
         end do
-        ! boop (TODO)
+        ! Add nfl-independent and nfl-linear terms as needed.
         do nfl=nfl_min, nfl_max, 1
+          KV_SG_1(1:nx,     1:nx,:,     nfl) = real(nfl)*qq_nfl_1(:,:,:)
           KV_SG_1(1:nx,     nx+1:2*nx,:,nfl) = real(nfl)*qG_nfl_1(:,:,:)
           KV_SG_1(nx+1:2*nx,1:nx,     :,nfl) = Gq_nfl_0(:,:,:) + real(nfl)*Gq_nfl_1(:,:,:)
           KV_SG_1(nx+1:2*nx,nx+1:2*nx,:,nfl) = GG_nfl_0(:,:,:) + real(nfl)*GG_nfl_1(:,:,:)
         end do
+        ! For the QQ block, the plus-type NS kernel is a contribution, so we need to add it.
+        ! The NS kernel matrix is built before this method is called so this is safe.
+        KV_SG_1(1:nx,1:nx,:,:) = KV_SG_1(1:nx,1:nx,:,:) + KV_NS_1p(:,:,:,:)
         ! And we're done
         deallocate(Gq_nfl_0)
         deallocate(Gq_nfl_1)

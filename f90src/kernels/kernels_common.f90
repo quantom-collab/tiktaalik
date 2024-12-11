@@ -130,6 +130,34 @@ module kernels_common
         f = X/Y * (2.0_dp*Xbar*Y*(4.0_dp/3.0_dp - abslog(Xbar*Y)) + Y - X)
     end function QQ_f_c
 
+    function QQ_h(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, QQf, QQfbar, logXbarlogY
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        QQf    = QQ_f_a(X   ,Y)    + QQ_f_b(X   ,Y   )
+        QQfbar = QQ_f_a(Xbar,Ybar) + QQ_f_b(Xbar,Ybar)
+        h = 2.*QQfbar*logprod(Xbar,Y) - 2.*QQf*(li2(X) + li2(Ybar))
+    end function QQ_h
+
+    function QQ_hbar(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, QQf, QQfbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        QQf    = QQ_f_a(X   ,Y)    + QQ_f_b(X   ,Y   )
+        QQfbar = QQ_f_a(Xbar,Ybar) + QQ_f_b(Xbar,Ybar)
+        h = (-QQfbar + QQf)*(2.*li2(1.-X/Y) + log2(Y)) &
+            & + 2.*QQf*(li2(Ybar) - logprod(X,Y)) &
+            & + 2.*QQfbar*li2(Xbar)
+    end function QQ_hbar
+
     ! QG
 
     function QG_f_a(X,Y) result(f)
