@@ -6,23 +6,26 @@
 ! Created June 6, 2024
 
 module matevo
-  use pixelation, only: initialize_lagrange_weights
   use alpha_qcd,  only: get_alpha_QCD, get_neff
+  use constants,  only: pi
   use convolution
   use kernels_common
   use kernels_lo
+  use kernels_nlo
+  use pixelation, only: initialize_lagrange_weights
 
   implicit none
   private
 
   integer,  parameter, private :: dp = kind(1d0)
-  real(dp), parameter, private :: pi = acos(-1.0_dp)
+  !real(dp), parameter, private :: pi = acos(-1.0_dp)
 
   integer, parameter, private :: nfl_min = 3
   integer, parameter, private :: nfl_max = 5
 
   ! Used for caching
   integer  :: nx_cache = 0, nxi_cache = 0, nQ2_cache = 0
+  logical  :: l_nlo_cache = .false.
 
   real(dp), allocatable, dimension(:) :: xi_cache
 
@@ -32,7 +35,11 @@ module matevo
   ! In kernels, indices are for (x,y,xi,nfl)
   ! For singlet/gluon, the first two indices go up to 2*nx,
   ! with the first nx values being singlet quark and the last nx being gluon.
+  ! LO
   real(dp), allocatable, dimension(:,:,:,:) :: K_NS_0, KV_SG_0, KA_SG_0
+  ! NLO
+  real(dp), allocatable, dimension(:,:,:,:) :: KV_NS_1p, KV_NS_1m, KV_NS_1s, &
+      & KA_NS_1p, KA_NS_1m, KA_NS_1s, KV_SG_1, KA_SG_1
 
   ! In evolution matrices, indices are for (x,y,xi,Q2)
   ! For singlet/gluon, the first two indices go up to 2*nx,
@@ -42,7 +49,7 @@ module matevo
   public :: make_kernels, make_matrices, &
       & evomat_V_NS, evomat_V_SG, evomat_A_NS, evomat_A_SG, &
       & kernel_V_QQ, kernel_V_QG, kernel_V_GQ, kernel_V_GG, &
-      & get_nx, get_nxi, get_nQ2
+      & get_nx, get_nxi, get_nQ2, get_lnlo
 
   contains
 
@@ -67,20 +74,25 @@ module matevo
         call initialize_2D(nx, nxi, xi_array)
         ! Initialize the kernel matrices
         call make_kernels_NS_0(nx, nxi)
+        call make_kernels_NS_1(nx, nxi)
         call make_kernels_SG_0(nx, nxi)
+        call make_kernels_SG_1(nx, nxi)
     end subroutine make_kernels
 
-    subroutine make_matrices(nQ2, Q2_array)
+    subroutine make_matrices(nQ2, Q2_array, l_nlo)
         ! Public method to initialize the evolution matrices
         ! This **MUST** be called before anything to grab the evolution matrices!
         integer,  intent(in) :: nQ2
         real(dp), intent(in) :: Q2_array(nQ2)
+        logical,  intent(in) :: l_nlo
+        ! Keep track of whether we're doing NLO
+        l_nlo_cache = l_nlo
         ! Keep track of the number of Q2 points
         nQ2_cache = nQ2
         ! Make evolution matrices
-        call make_evomat_NS(nx_cache, nxi_cache, nQ2, Q2_array)
-        call make_evomat_V_SG(nx_cache, nxi_cache, nQ2, Q2_array)
-        call make_evomat_A_SG(nx_cache, nxi_cache, nQ2, Q2_array)
+        call make_evomat_NS(nx_cache, nxi_cache, nQ2, Q2_array, l_nlo)
+        call make_evomat_V_SG(nx_cache, nxi_cache, nQ2, Q2_array, l_nlo)
+        call make_evomat_A_SG(nx_cache, nxi_cache, nQ2, Q2_array, l_nlo)
     end subroutine make_matrices
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,31 +113,55 @@ module matevo
         nQ2 = nQ2_cache
     end function get_nQ2
 
+    function get_lnlo() result(l_nlo)
+        logical :: l_nlo
+        l_nlo = l_nlo_cache
+    end function get_lnlo
+
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Public methods to return kenrel matrices
 
-    function kernel_V_QQ(nx, nxi, nfl) result(K)
-        integer,  intent(in) :: nx, nxi, nfl
+    function kernel_V_QQ(Q2, nx, nxi, nfl, l_nlo, i_ns_type) result(K)
+        real(dp), intent(in) :: Q2
+        integer,  intent(in) :: nx, nxi, nfl, i_ns_type
+        logical,  intent(in) :: l_nlo
         real(dp), dimension(nx,nx,nxi) :: K
-        K = K_NS_0(:,:,:,nfl)
+        real(dp) :: al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        K = al2pi * K_NS_0(:,:,:,nfl)
     end function kernel_V_QQ
 
-    function kernel_V_QG(nx, nxi, nfl) result(K)
+    function kernel_V_QG(Q2, nx, nxi, nfl, l_nlo) result(K)
+        real(dp), intent(in) :: Q2
         integer,  intent(in) :: nx, nxi, nfl
+        logical,  intent(in) :: l_nlo
         real(dp), dimension(nx,nx,nxi) :: K
-        K = KV_SG_0(1:nx,nx+1:2*nx,:,nfl)
+        real(dp) :: al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        K = al2pi * KV_SG_0(1:nx,nx+1:2*nx,:,nfl)
     end function kernel_V_QG
 
-    function kernel_V_GQ(nx, nxi, nfl) result(K)
+    function kernel_V_GQ(Q2, nx, nxi, nfl, l_nlo) result(K)
+        real(dp), intent(in) :: Q2
         integer,  intent(in) :: nx, nxi, nfl
+        logical,  intent(in) :: l_nlo
         real(dp), dimension(nx,nx,nxi) :: K
-        K = KV_SG_0(nx+1:2*nx,1:nx,:,nfl)
+        real(dp) :: al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        K = al2pi * KV_SG_0(nx+1:2*nx,1:nx,:,nfl)
+        if(l_nlo) then
+          K = K + al2pi**2 * KV_SG_1(nx+1:2*nx,1:nx,:,nfl)
+        endif
     end function kernel_V_GQ
 
-    function kernel_V_GG(nx, nxi, nfl) result(K)
+    function kernel_V_GG(Q2, nx, nxi, nfl, l_nlo) result(K)
+        real(dp), intent(in) :: Q2
         integer,  intent(in) :: nx, nxi, nfl
+        logical,  intent(in) :: l_nlo
         real(dp), dimension(nx,nx,nxi) :: K
-        K = KV_SG_0(nx+1:2*nx,nx+1:2*nx,:,nfl)
+        real(dp) :: al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        K = al2pi * KV_SG_0(nx+1:2*nx,nx+1:2*nx,:,nfl)
     end function kernel_V_GG
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,6 +210,31 @@ module matevo
         end do
         !$OMP END PARALLEL DO
     end subroutine make_kernels_NS_0
+
+    subroutine make_kernels_NS_1(nx, nxi)
+        ! TODO
+        integer, intent(in) :: nx, nxi
+        integer :: ix, iy, iz, nfl
+        if(allocated(KV_NS_1p)) deallocate(KV_NS_1p)
+        if(allocated(KV_NS_1m)) deallocate(KV_NS_1m)
+        if(allocated(KV_NS_1s)) deallocate(KV_NS_1s)
+        if(allocated(KA_NS_1p)) deallocate(KA_NS_1p)
+        if(allocated(KA_NS_1m)) deallocate(KA_NS_1m)
+        if(allocated(KA_NS_1s)) deallocate(KA_NS_1s)
+        allocate(KV_NS_1p(nx,nx,nxi,nfl_min:nfl_max))
+        allocate(KV_NS_1m(nx,nx,nxi,nfl_min:nfl_max))
+        allocate(KV_NS_1s(nx,nx,nxi,nfl_min:nfl_max))
+        allocate(KA_NS_1p(nx,nx,nxi,nfl_min:nfl_max))
+        allocate(KA_NS_1m(nx,nx,nxi,nfl_min:nfl_max))
+        allocate(KA_NS_1s(nx,nx,nxi,nfl_min:nfl_max))
+        ! TODO ... just zeroes as placeholds for now ...
+        KV_NS_1p = 0.0_dp
+        KV_NS_1m = 0.0_dp
+        KV_NS_1s = 0.0_dp
+        KA_NS_1p = 0.0_dp
+        KA_NS_1m = 0.0_dp
+        KA_NS_1s = 0.0_dp
+    end subroutine make_kernels_NS_1
 
     subroutine make_kernels_SG_0(nx, nxi)
         integer, intent(in) :: nx, nxi
@@ -241,16 +302,50 @@ module matevo
         deallocate(GG_nfl_1)
     end subroutine make_kernels_SG_0
 
+    subroutine make_kernels_SG_1(nx, nxi)
+        integer, intent(in) :: nx, nxi
+        integer :: ix, iy, iz, nfl
+        real(dp), dimension(:,:,:), allocatable :: Gq_nfl_0, Gq_nfl_1
+        ! TODO : the rest
+        if(allocated(KA_SG_1)) deallocate(KA_SG_1)
+        if(allocated(KV_SG_1)) deallocate(KV_SG_1)
+        allocate(KA_SG_1(2*nx,2*nx,nxi,nfl_min:nfl_max))
+        allocate(KV_SG_1(2*nx,2*nx,nxi,nfl_min:nfl_max))
+        ! Temporary sub-matrix arrays ...  TODO: the rest
+        allocate(Gq_nfl_0(nx,nx,nxi))
+        allocate(Gq_nfl_1(nx,nx,nxi))
+        KA_SG_1 = 0.0_dp
+        KV_SG_1 = 0.0_dp
+        ! Currently testing with one type of kernel
+        !$OMP PARALLEL DO
+        do ix=1, nx, 1
+          do iy=1, nx, 1
+            do iz=1, nxi, 1
+              Gq_nfl_0(ix,iy,iz) = pixel_conv(KV1_Gq_reg,     zero_func,  zero_func,  xi_cache(iz), nx, ix, iy)
+              Gq_nfl_1(ix,iy,iz) = pixel_conv(KV1_Gq_reg_nfl, zero_func,  zero_func,  xi_cache(iz), nx, ix, iy)
+            end do
+          end do
+        end do
+        ! boop (TODO)
+        do nfl=nfl_min, nfl_max, 1
+          KV_SG_1(nx+1:2*nx,1:nx,     :,nfl) = Gq_nfl_0(:,:,:) + real(nfl)*Gq_nfl_1(:,:,:)
+        end do
+        ! And we're done
+        deallocate(Gq_nfl_0)
+        deallocate(Gq_nfl_1)
+    end subroutine make_kernels_SG_1
+
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Methods to make evolution matrices
 
-    subroutine make_evomat_NS(nx, nxi, nQ2, Q2_array)
+    subroutine make_evomat_NS(nx, nxi, nQ2, Q2_array, l_nlo)
         ! Just one non-singlet evolution matrix at leading order.
         ! I'll need to break this into multiple routines,
         ! for both V-type and A-type, but also plus-type and minus-type,
         ! after going to NLO. But I'll burn that bridge when I come to it.
         integer,  intent(in) :: nx, nxi, nQ2
         real(dp), intent(in) :: Q2_array(nQ2)
+        logical,  intent(in) :: l_nlo
         real(dp), dimension(nx,nx) :: idnx
         integer :: ix, ixi, iQ2, nfl
         if(allocated(MV_NS)) deallocate(MV_NS)
@@ -280,9 +375,10 @@ module matevo
         end do
     end subroutine make_evomat_NS
 
-    subroutine make_evomat_V_SG(nx, nxi, nQ2, Q2_array)
+    subroutine make_evomat_V_SG(nx, nxi, nQ2, Q2_array, l_nlo)
         integer,  intent(in) :: nx, nxi, nQ2
         real(dp), intent(in) :: Q2_array(nQ2)
+        logical,  intent(in) :: l_nlo
         real(dp), dimension(2*nx,2*nx) :: id2nx
         integer :: ix, ixi, iQ2, nfl
         if(allocated(MV_SG)) deallocate(MV_SG)
@@ -313,9 +409,10 @@ module matevo
         end do
     end subroutine make_evomat_V_SG
 
-    subroutine make_evomat_A_SG(nx, nxi, nQ2, Q2_array)
+    subroutine make_evomat_A_SG(nx, nxi, nQ2, Q2_array, l_nlo)
         integer,  intent(in) :: nx, nxi, nQ2
         real(dp), intent(in) :: Q2_array(nQ2)
+        logical,  intent(in) :: l_nlo
         real(dp), dimension(2*nx,2*nx) :: id2nx
         integer :: ix, ixi, iQ2, nfl
         if(allocated(MA_SG)) deallocate(MA_SG)

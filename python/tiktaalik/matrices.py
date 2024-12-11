@@ -41,7 +41,7 @@ def initialize_kernels(nx, xi):
     f90src.make_kernels_wrap(nx, xi)
     return
 
-def initialize_evolution_matrices(Q2):
+def initialize_evolution_matrices(Q2, nlo=False):
     ''' Initializes the evolution matrices.
     This **MUST** be called before any method to get the evolution matrices.
     Moreover, initialize_kernels (above) **MUST** be called first.
@@ -49,18 +49,20 @@ def initialize_evolution_matrices(Q2):
     INPUT:
     - Q2 .... numpy.array, with *at least* two values
          first value is the Q2 value at which evolutuon starts
+    - nlo ... boolean, False by default; whether to include NLO corrections.
     OUTPUT:
     - None
     NOTES:
     - If the user wishes to change the Q2 array, this must be called again.
     - If the user wishes to change the nx or xi, initialize_kernels
       must be called to do this.
+    - If the user wishes to toggle NLO, this must be called again.
     - If initialize_kernels has been called, any initialized evolution matrices
       have been erased and this routine must be called again.
     '''
     nQ2 = Q2.shape[0]
     assert(nQ2 >= 2)
-    f90src.make_matrices_wrap(Q2)
+    f90src.make_matrices_wrap(Q2, nlo)
     return
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -166,34 +168,42 @@ def matrix_ASG():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Routines to create kernels
 
-def kernel_VQQ(nfl=4):
+def kernel_VQQ(Q2=pars.mc2, nfl=4, nlo=False, nstype=1):
     # TODO DOCSTRING
     assert(nfl==3 or nfl==4 or nfl==5)
     nx  = f90src.get_nx_wrap()
     nxi = f90src.get_nxi_wrap()
-    K = f90src.evokernel_vqq_wrap(nx, nxi, nfl)
+    K = f90src.evokernel_vqq_wrap(Q2, nx, nxi, nfl, nlo, nstype)
     return K
 
-def kernel_VQG(nfl=4):
+def kernel_VQG(Q2=pars.mc2, nfl=4, nlo=False):
     # TODO DOCSTRING
     assert(nfl==3 or nfl==4 or nfl==5)
     nx  = f90src.get_nx_wrap()
     nxi = f90src.get_nxi_wrap()
-    K = f90src.evokernel_vqg_wrap(nx, nxi, nfl)
+    K = f90src.evokernel_vqg_wrap(Q2, nx, nxi, nfl, nlo)
     return K
 
-def kernel_VGQ(nfl=4):
+def kernel_VGQ(Q2=pars.mc2, nfl=4, nlo=False):
     # TODO DOCSTRING
     assert(nfl==3 or nfl==4 or nfl==5)
     nx  = f90src.get_nx_wrap()
     nxi = f90src.get_nxi_wrap()
-    K = f90src.evokernel_vgq_wrap(nx, nxi, nfl)
+    K = f90src.evokernel_vgq_wrap(Q2, nx, nxi, nfl, nlo)
     return K
 
-def kernel_VGG(nfl=4):
+def kernel_VGG(Q2=pars.mc2, nfl=4, nlo=False):
     # TODO DOCSTRING
     assert(nfl==3 or nfl==4 or nfl==5)
     nx  = f90src.get_nx_wrap()
     nxi = f90src.get_nxi_wrap()
-    K = f90src.evokernel_vgg_wrap(nx, nxi, nfl)
+    K = f90src.evokernel_vgg_wrap(Q2, nx, nxi, nfl, nlo)
     return K
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TESTING AREA (TODO REMOVE BEFORE RELEASE)
+
+def dilog(x):
+    if(np.isscalar(x)):
+        x = np.array([x])
+    return f90src.dilog_wrap(x)
