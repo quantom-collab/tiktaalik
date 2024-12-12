@@ -35,7 +35,7 @@ module kernels_nlo
       & KV1_qq_reg, &
       & KV1_qG_reg, KV1_Gq_reg, KV1_Gq_reg_nfl, &
       KV1_GG_cst, KV1_GG_pls, KV1_GG_cst_nfl, KV1_GG_pls_nfl
-  ! TODO : the rest
+  ! TODO : helicity-dependent NLO corrections
 
   contains
 
@@ -480,7 +480,6 @@ module kernels_nlo
             & )
         ! Factor in the support regions
         K = K*rho_step(X,Y)
-        !K = 0.0_dp ! test
     end function KV1_Gq_half_nfl
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -509,7 +508,7 @@ module kernels_nlo
         !
         ! From plus prescription
         K = 0.0_dp
-        K = integrate(integrand, x, xi)
+        K = integrate2(integrand, x, xi)
         return
         contains
           function integrand(y) result(intd)
@@ -554,7 +553,7 @@ module kernels_nlo
             & -0.5*GGhV - 0.5*GGhbarV &
             & )
         piece2 = 0.5*CA*beta0*( &
-            & - 5./3.*GGfV - 13./3.*GGfc - 11./2.*X**2/Y**2 + X*(Xbar+Ybar)/(Y**2*Ybar) &
+            & - 5./3.*GGfV - 13./3.*GGfc - 11./2.*X**2/Y**2 + X*(X+Ybar)/(Y**2*Ybar) &
             & + X**2/Ybar**2*abslog(Y) + Xbar**2/Y**2*abslog(Xbar) &
             & )
         ! pieces 4, 5 have support only in the ERBL region
@@ -599,10 +598,10 @@ module kernels_nlo
         ! Explicit term in Eqs. (175) and (176)
         K = -1./108.*(35.*CA + 74.*CF)
         ! From plus prescription
-        ! test...
-        K = K + integrate(integrand, x, xi)
+        K = K + integrate2(integrand, x, xi)
         return
         contains
+        ! test...
           function integrand(y) result(intd)
               real(dp), intent(in) :: y
               real(dp) :: intd
@@ -632,11 +631,9 @@ module kernels_nlo
         GGfV    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   ) + 2.*GG_f_C(X   ,Y   )
         GGfbarV = 2.*GG_f_a(Xbar,Ybar) + GG_f_b(Xbar,Ybar) + 2.*GG_f_C(Xbar,Ybar)
         GGfc    = GG_f_c(X,Y)
-        !GGhV    = GG_h_V(X,Y)
-        !GGhbarV = GG_hbar_V(Xbar,Y)
         ! pieces 1, 2, 3 have support in both regions
         piece2 = 0.5*CA*beta0*( &
-            & - 5./3.*GGfV - 13./3.*GGfc - 11./2.*X**2/Y**2 + X*(Xbar+Ybar)/(Y**2*Ybar) &
+            & - 5./3.*GGfV - 13./3.*GGfc - 11./2.*X**2/Y**2 + X*(X+Ybar)/(Y**2*Ybar) &
             & + X**2/Ybar**2*abslog(Y) + Xbar**2/Y**2*abslog(Xbar) &
             & )
         piece3 = CF*TF*( &
