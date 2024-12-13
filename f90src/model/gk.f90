@@ -191,7 +191,7 @@ module gk
             H = H + C(i,j)*ew(x, xi, w)*z**pw(i, j, w, t) / pw(i, j, w, t)
           end do
         end do
-        H = H * 1.875/xi
+        H = H * 1.875/xi/2.
     end function H_n2_term
 
     function kw(x, xi, w) result(kappa)
