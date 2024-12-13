@@ -266,7 +266,7 @@ module kernels_nlo
         ! piece 1 has support in both ERBL and DGLAP regions
         piece1 = X*(3.-8.*X*Ybar)/Y + X*(5.-8.*X)/Ybar*abslog(X/Y) &
             & + (X/Ybar - 4.*X*Xbar)*log2(X/Y) &
-            & + 8.*X*Xbar*(li2(Xbar) - li2(Ybar) + logprod(Xbar,Y))
+            & + 8.*X*Xbar*(dilog(Xbar) - dilog(Ybar) + logprod(Xbar,Y))
         ! piece 2 only has support in the ERBL region
         piece2 = -290./9.*X*Xbar &
             & - (X*(5.-8.*X)/Ybar + 2.*X*(9.-19.*Xbar)/3.)*abslog(X) &
