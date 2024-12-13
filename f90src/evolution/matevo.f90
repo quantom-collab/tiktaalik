@@ -38,8 +38,7 @@ module matevo
   ! LO
   real(dp), allocatable, dimension(:,:,:,:) :: K_NS_0, KV_SG_0, KA_SG_0
   ! NLO
-  real(dp), allocatable, dimension(:,:,:,:) :: KV_NS_1p, KV_NS_1m, &
-      & KA_NS_1p, KA_NS_1m, KV_SG_1, KA_SG_1
+  real(dp), allocatable, dimension(:,:,:,:) :: KV_NS_1p, KV_NS_1m, KV_SG_1, KA_SG_1
 
   ! In evolution matrices, indices are for (x,y,xi,Q2)
   ! For singlet/gluon, the first two indices go up to 2*nx,
@@ -49,6 +48,7 @@ module matevo
   public :: make_kernels, make_matrices, &
       & evomat_V_NS, evomat_V_SG, evomat_A_NS, evomat_A_SG, &
       & kernel_V_QQ, kernel_V_QG, kernel_V_GQ, kernel_V_GG, &
+      & kernel_A_QQ, kernel_A_QG, kernel_A_GQ, kernel_A_GG, &
       & get_nx, get_nxi, get_nQ2, get_lnlo
 
   contains
@@ -180,6 +180,66 @@ module matevo
         endif
     end function kernel_V_GG
 
+    function kernel_A_QQ(Q2, nx, nxi, nfl, l_nlo, i_ns_type) result(K)
+        ! NS kernels are the same as for V, except + and - are swapped.
+        real(dp), intent(in) :: Q2
+        integer,  intent(in) :: nx, nxi, nfl, i_ns_type
+        logical,  intent(in) :: l_nlo
+        real(dp), dimension(nx,nx,nxi) :: K
+        real(dp) :: al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        K = al2pi * K_NS_0(:,:,:,nfl)
+        if(l_nlo) then
+          select case(i_ns_type)
+          case(1)
+            K = K + al2pi**2 * KV_NS_1m(:,:,:,nfl)
+          case(-1)
+            K = K + al2pi**2 * KV_NS_1p(:,:,:,nfl)
+          case(0)
+            K = K + al2pi**2 * KA_SG_1(1:nx,1:nx,:,nfl)
+          end select
+        endif
+    end function kernel_A_QQ
+
+    function kernel_A_QG(Q2, nx, nxi, nfl, l_nlo) result(K)
+        real(dp), intent(in) :: Q2
+        integer,  intent(in) :: nx, nxi, nfl
+        logical,  intent(in) :: l_nlo
+        real(dp), dimension(nx,nx,nxi) :: K
+        real(dp) :: al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        K = al2pi * KA_SG_0(1:nx,nx+1:2*nx,:,nfl)
+        if(l_nlo) then
+          K = K + al2pi**2 * KA_SG_1(1:nx,nx+1:2*nx,:,nfl)
+        endif
+    end function kernel_A_QG
+
+    function kernel_A_GQ(Q2, nx, nxi, nfl, l_nlo) result(K)
+        real(dp), intent(in) :: Q2
+        integer,  intent(in) :: nx, nxi, nfl
+        logical,  intent(in) :: l_nlo
+        real(dp), dimension(nx,nx,nxi) :: K
+        real(dp) :: al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        K = al2pi * KA_SG_0(nx+1:2*nx,1:nx,:,nfl)
+        if(l_nlo) then
+          K = K + al2pi**2 * KA_SG_1(nx+1:2*nx,1:nx,:,nfl)
+        endif
+    end function kernel_A_GQ
+
+    function kernel_A_GG(Q2, nx, nxi, nfl, l_nlo) result(K)
+        real(dp), intent(in) :: Q2
+        integer,  intent(in) :: nx, nxi, nfl
+        logical,  intent(in) :: l_nlo
+        real(dp), dimension(nx,nx,nxi) :: K
+        real(dp) :: al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        K = al2pi * KA_SG_0(nx+1:2*nx,nx+1:2*nx,:,nfl)
+        if(l_nlo) then
+          K = K + al2pi**2 * KA_SG_1(nx+1:2*nx,nx+1:2*nx,:,nfl)
+        endif
+    end function kernel_A_GG
+
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Public methods to return evolution matrices
 
@@ -228,38 +288,17 @@ module matevo
     end subroutine make_kernels_NS_0
 
     subroutine make_kernels_NS_1(nx, nxi)
-        ! TODO
         integer, intent(in) :: nx, nxi
-        !integer :: ix, iy, iz, nfl
         if(allocated(KV_NS_1p)) deallocate(KV_NS_1p)
         if(allocated(KV_NS_1m)) deallocate(KV_NS_1m)
-        !!!if(allocated(KV_NS_1s)) deallocate(KV_NS_1s)
-        if(allocated(KA_NS_1p)) deallocate(KA_NS_1p)
-        if(allocated(KA_NS_1m)) deallocate(KA_NS_1m)
-        !!!if(allocated(KA_NS_1s)) deallocate(KA_NS_1s)
         allocate(KV_NS_1p(nx,nx,nxi,nfl_min:nfl_max))
         allocate(KV_NS_1m(nx,nx,nxi,nfl_min:nfl_max))
-        !!!allocate(KV_NS_1s(nx,nx,nxi,nfl_min:nfl_max))
-        allocate(KA_NS_1p(nx,nx,nxi,nfl_min:nfl_max))
-        allocate(KA_NS_1m(nx,nx,nxi,nfl_min:nfl_max))
-        !!!allocate(KA_NS_1s(nx,nx,nxi,nfl_min:nfl_max))
-        ! TODO ... just zeroes as placeholds for now ...
-        !!!KV_NS_1p = 0.0_dp
-        !!!KV_NS_1m = 0.0_dp
-        !!!KV_NS_1s = 0.0_dp
-        KA_NS_1p = 0.0_dp
-        KA_NS_1m = 0.0_dp
-        !!!KA_NS_1s = 0.0_dp
         call make_one_nlo_ns_kernel(nx, nxi, &
             & zero_func, KV1_NSp_pls, KV1_NSp_cst, zero_func, KV1_NSp_pls_nfl, KV1_NSp_cst_nfl, &
             & KV_NS_1p)
         call make_one_nlo_ns_kernel(nx, nxi, &
             & zero_func, KV1_NSm_pls, KV1_NSm_cst, zero_func, KV1_NSm_pls_nfl, KV1_NSm_cst_nfl, &
             & KV_NS_1m)
-        !!!call make_one_nlo_ns_kernel(nx, nxi, &
-            !!!& zero_func, zero_func, zero_func, KV1_qq_reg, zero_func, zero_func, &
-            !!!& KV_NS_1s)
-        !!!KV_NS_1s
     end subroutine make_kernels_NS_1
 
     subroutine make_one_nlo_ns_kernel(nx, nxi, freg0, fpls0, fcst0, freg1, fpls1, fcst1, kernel)
@@ -371,6 +410,8 @@ module matevo
         allocate(GG_nfl_1(nx,nx,nxi))
         KA_SG_1 = 0.0_dp
         KV_SG_1 = 0.0_dp
+        ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        !  V-type kernel first
         !$OMP PARALLEL DO
         do ix=1, nx, 1
           do iy=1, nx, 1
@@ -392,11 +433,42 @@ module matevo
           KV_SG_1(nx+1:2*nx,nx+1:2*nx,:,nfl) = GG_nfl_0(:,:,:) + real(nfl)*GG_nfl_1(:,:,:)
         end do
         ! For the QQ block, the plus-type NS kernel is a contribution, so we need to add it.
+        ! (See Eq. (182).)
         ! The NS kernel matrix is built before this method is called so this is safe.
         KV_SG_1(1:nx,1:nx,:,:) = KV_SG_1(1:nx,1:nx,:,:) + KV_NS_1p(:,:,:,:)
+        ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        !  A-type kernel next
+        !$OMP PARALLEL DO
+        do ix=1, nx, 1
+          do iy=1, nx, 1
+            do iz=1, nxi, 1
+              qq_nfl_1(ix,iy,iz) = pixel_conv(KA1_qq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
+              qG_nfl_1(ix,iy,iz) = pixel_conv(KA1_qG_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
+              Gq_nfl_0(ix,iy,iz) = pixel_conv(KA1_Gq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
+              Gq_nfl_1(ix,iy,iz) = pixel_conv(KA1_Gq_reg_nfl, zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
+              !GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls,     KA1_GG_cst,     xi_cache(iz), nx, ix, iy)
+              !GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls_nfl, KA1_GG_cst_nfl, xi_cache(iz), nx, ix, iy)
+            end do
+          end do
+        end do
+        ! Add nfl-independent and nfl-linear terms as needed.
+        do nfl=nfl_min, nfl_max, 1
+          KA_SG_1(1:nx,     1:nx,:,     nfl) = real(nfl)*qq_nfl_1(:,:,:)
+          KA_SG_1(1:nx,     nx+1:2*nx,:,nfl) = real(nfl)*qG_nfl_1(:,:,:)
+          KA_SG_1(nx+1:2*nx,1:nx,     :,nfl) = Gq_nfl_0(:,:,:) + real(nfl)*Gq_nfl_1(:,:,:)
+          !KA_SG_1(nx+1:2*nx,nx+1:2*nx,:,nfl) = GG_nfl_0(:,:,:) + real(nfl)*GG_nfl_1(:,:,:)
+        end do
+        ! For the QQ block, the minus-type NS kernel is a contribution, so we need to add it.
+        ! (See Eq. (178).)
+        ! The NS kernel matrix is built before this method is called so this is safe.
+        KA_SG_1(1:nx,1:nx,:,:) = KA_SG_1(1:nx,1:nx,:,:) + KV_NS_1m(:,:,:,:)
         ! And we're done
+        deallocate(qq_nfl_1)
+        deallocate(qG_nfl_1)
         deallocate(Gq_nfl_0)
         deallocate(Gq_nfl_1)
+        deallocate(GG_nfl_0)
+        deallocate(GG_nfl_1)
     end subroutine make_kernels_SG_1
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -201,6 +201,36 @@ module kernels_common
             & - 2.*QGfVbar*dilog(Xbar)
     end function QG_hbar_V
 
+    function QG_h_A(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, QGfA, QGfAbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74), (75)
+        QGfA    = -QG_f_a(X   ,Y)
+        QGfAbar = -QG_f_a(Xbar,Ybar)
+        h = -2.*QGfAbar*logprod(Xbar,Y) - 2.*QGfA*(dilog(X) + dilog(Ybar))
+    end function QG_h_A
+
+    function QG_hbar_A(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, QGfA, QGfAbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74), (75)
+        QGfA    = -QG_f_a(X   ,Y)
+        QGfAbar = -QG_f_a(Xbar,Ybar)
+        h = (QGfAbar + QGfA)*(2.*dilog(1.-X/Y) + log2(Y)) &
+            & + 2.*QGfA*(dilog(Ybar) - logprod(X,Y)) &
+            & - 2.*QGfAbar*dilog(Xbar)
+    end function QG_hbar_A
+
     ! GQ
 
     function GQ_f_a(X,Y) result(f)
@@ -247,15 +277,40 @@ module kernels_common
         ! Eqs. (74), (75)
         GQfV    = GQ_f_a(X   ,Y)    + 2.*GQ_f_c(X   ,Y   )
         GQfVbar = GQ_f_a(Xbar,Ybar) + 2.*GQ_f_c(Xbar,Ybar)
-        ! What's literally written
         h = (GQfVbar + GQfV)*(2.*dilog(1.-X/Y) + log2(Y)) &
             & + 2.*GQfV*(dilog(Ybar) - logprod(X,Y)) &
             & - 2.*GQfVbar*dilog(Xbar)
-        ! My guess at what they meant?
-        !h = (GQfVbar + GQfV)*(2.*dilog(1.-Xbar/Y) + log2(Y)) &
-        !    & + 2.*GQfV*(dilog(Ybar) - logprod(Xbar,Y)) &
-        !    & - 2.*GQfVbar*dilog(X)
     end function GQ_hbar_V
+
+    function GQ_h_A(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, GQfA, GQfAbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74), (75)
+        GQfA    = GQ_f_a(X   ,Y)
+        GQfAbar = GQ_f_a(Xbar,Ybar)
+        h = -2.*GQfAbar*logprod(Xbar,Y) - 2.*GQfA*(dilog(X) + dilog(Ybar))
+    end function GQ_h_A
+
+    function GQ_hbar_A(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, GQfA, GQfAbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74), (75)
+        GQfA    = GQ_f_a(X   ,Y)
+        GQfAbar = GQ_f_a(Xbar,Ybar)
+        h = (GQfAbar + GQfA)*(2.*dilog(1.-X/Y) + log2(Y)) &
+            & + 2.*GQfA*(dilog(Ybar) - logprod(X,Y)) &
+            & - 2.*GQfAbar*dilog(Xbar)
+    end function GQ_hbar_A
 
     ! GG
 

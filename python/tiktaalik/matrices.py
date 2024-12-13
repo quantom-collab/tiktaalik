@@ -200,6 +200,38 @@ def kernel_VGG(Q2=pars.mc2, nfl=4, nlo=False):
     K = f90src.evokernel_vgg_wrap(Q2, nx, nxi, nfl, nlo)
     return K
 
+def kernel_AQQ(Q2=pars.mc2, nfl=4, nlo=False, nstype=1):
+    # TODO DOCSTRING
+    assert(nfl==3 or nfl==4 or nfl==5)
+    nx  = f90src.get_nx_wrap()
+    nxi = f90src.get_nxi_wrap()
+    K = f90src.evokernel_aqq_wrap(Q2, nx, nxi, nfl, nlo, nstype)
+    return K
+
+def kernel_AQG(Q2=pars.mc2, nfl=4, nlo=False):
+    # TODO DOCSTRING
+    assert(nfl==3 or nfl==4 or nfl==5)
+    nx  = f90src.get_nx_wrap()
+    nxi = f90src.get_nxi_wrap()
+    K = f90src.evokernel_aqg_wrap(Q2, nx, nxi, nfl, nlo)
+    return K
+
+def kernel_AGQ(Q2=pars.mc2, nfl=4, nlo=False):
+    # TODO DOCSTRING
+    assert(nfl==3 or nfl==4 or nfl==5)
+    nx  = f90src.get_nx_wrap()
+    nxi = f90src.get_nxi_wrap()
+    K = f90src.evokernel_agq_wrap(Q2, nx, nxi, nfl, nlo)
+    return K
+
+def kernel_AGG(Q2=pars.mc2, nfl=4, nlo=False):
+    # TODO DOCSTRING
+    assert(nfl==3 or nfl==4 or nfl==5)
+    nx  = f90src.get_nx_wrap()
+    nxi = f90src.get_nxi_wrap()
+    K = f90src.evokernel_agg_wrap(Q2, nx, nxi, nfl, nlo)
+    return K
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # TESTING AREA (TODO REMOVE BEFORE RELEASE)
 

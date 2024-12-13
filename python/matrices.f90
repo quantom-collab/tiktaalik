@@ -138,6 +138,46 @@ module dummy
         K = kernel_V_gg(Q2, nx, nxi, nfl, l_nlo)
     end subroutine evokernel_vgg_wrap
 
+    subroutine evokernel_aqq_wrap(Q2, nx, nxi, nfl, l_nlo, i_ns_type, K)
+        integer,  parameter   :: dp = kind(1d0)
+        real(dp), intent(in)  :: Q2
+        integer,  intent(in)  :: nx, nxi, nfl, i_ns_type
+        logical,  intent(in)  :: l_nlo
+        real(dp), intent(out) :: K(nx,nx,nxi)
+        !
+        K = kernel_A_qq(Q2, nx, nxi, nfl, l_nlo, i_ns_type)
+    end subroutine evokernel_aqq_wrap
+
+    subroutine evokernel_aqg_wrap(Q2, nx, nxi, nfl, l_nlo, K)
+        integer,  parameter   :: dp = kind(1d0)
+        real(dp), intent(in)  :: Q2
+        integer,  intent(in)  :: nx, nxi, nfl
+        logical,  intent(in)  :: l_nlo
+        real(dp), intent(out) :: K(nx,nx,nxi)
+        !
+        K = kernel_A_qg(Q2, nx, nxi, nfl, l_nlo)
+    end subroutine evokernel_aqg_wrap
+
+    subroutine evokernel_agq_wrap(Q2, nx, nxi, nfl, l_nlo, K)
+        integer,  parameter   :: dp = kind(1d0)
+        real(dp), intent(in)  :: Q2
+        integer,  intent(in)  :: nx, nxi, nfl
+        logical,  intent(in)  :: l_nlo
+        real(dp), intent(out) :: K(nx,nx,nxi)
+        !
+        K = kernel_A_gq(Q2, nx, nxi, nfl, l_nlo)
+    end subroutine evokernel_agq_wrap
+
+    subroutine evokernel_agg_wrap(Q2, nx, nxi, nfl, l_nlo, K)
+        integer,  parameter   :: dp = kind(1d0)
+        real(dp), intent(in)  :: Q2
+        integer,  intent(in)  :: nx, nxi, nfl
+        logical,  intent(in)  :: l_nlo
+        real(dp), intent(out) :: K(nx,nx,nxi)
+        !
+        K = kernel_A_gg(Q2, nx, nxi, nfl, l_nlo)
+    end subroutine evokernel_agg_wrap
+
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! TESTING AREA (TODO REMOVE BEFORE RELEASE)
 
