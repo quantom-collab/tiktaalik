@@ -16,7 +16,7 @@
 ! 1.) TODO
 !
 ! 2.) Stuff independent of the number of active flavors (nfl) and linear in nfl
-! have been separated. (TODO)
+! have been separated.
 
 module kernels_nlo
   use constants,      only: CF, CA, TF, pi, zeta2, zeta3
@@ -328,6 +328,7 @@ module kernels_nlo
         Y2 = 0.5*(1.-y/xi)
         K = KV1_qG_half(X1,Y1) - KV1_qG_half(X2,Y2)
         K = 0.5*K/xi
+        K = K / (2.*xi) ! Eq. (15) of BFM
     end function KV1_qG_reg
 
     function KV1_qG_half(X, Y) result(K)
@@ -398,6 +399,7 @@ module kernels_nlo
         Y2 = 0.5*(1.-y/xi)
         K = KA1_qG_half(X1,Y1) - KA1_qG_half(X2,Y2)
         K = 0.5*K/xi
+        K = K / (2.*xi) ! Eq. (15) of BFM
     end function KA1_qG_reg
 
     function KA1_qG_half(X, Y) result(K)
@@ -616,7 +618,6 @@ module kernels_nlo
         piece6 = piece6*erbl_step(X)
         K = piece1 + piece2 + piece3 + piece4 + piece5 + piece6
     end function KA1_Gq_half
-
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Gq kernel pieces: linear in nfl
