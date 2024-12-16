@@ -35,8 +35,8 @@ module kernels_nlo
       & KV1_qq_reg, KA1_qq_reg, &
       & KV1_qG_reg, KV1_Gq_reg, KV1_Gq_reg_nfl, &
       & KA1_qG_reg, KA1_Gq_reg, KA1_Gq_reg_nfl, &
-      & KV1_GG_cst, KV1_GG_pls, KV1_GG_cst_nfl, KV1_GG_pls_nfl
-  ! TODO : helicity-dependent NLO corrections
+      & KV1_GG_cst, KV1_GG_pls, KV1_GG_cst_nfl, KV1_GG_pls_nfl, &
+      & KA1_GG_cst, KA1_GG_pls, KA1_GG_cst_nfl, KA1_GG_pls_nfl
 
   contains
 
@@ -743,7 +743,6 @@ module kernels_nlo
         real(dp) :: K
         !
         ! From plus prescription
-        K = 0.0_dp
         K = integrate2(integrand, x, xi)
         return
         contains
@@ -807,6 +806,90 @@ module kernels_nlo
         K = piece1 + piece2 + piece3 + piece4 + piece5
     end function KV1_GG_half
 
+    function KA1_GG_pls(x, y, xi) result(K)
+        ! Eq. (181)
+        ! Plus-type, plus distribution piece
+        real(dp), intent(in) :: x, y, xi
+        real(dp) :: K
+        !
+        real(dp) :: X1, X2, Y1, Y2
+        X1 = 0.5*(1.+x/xi)
+        X2 = 0.5*(1.-x/xi)
+        Y1 = 0.5*(1.+y/xi)
+        Y2 = 0.5*(1.-y/xi)
+        K = KA1_GG_half(X1,Y1) + KA1_GG_half(X2,Y2)
+        K = 0.5*K/xi
+    end function KA1_GG_pls
+
+    function KA1_GG_cst(x, xi) result(K)
+        ! Eq. (181)
+        ! Plus-type, constant term
+        real(dp), intent(in) :: x, xi
+        real(dp) :: K
+        !
+        ! Explicit term in Eqs. (175) and (176)
+        K = CA**2*(95./27.-14./3.*zeta2+2.*zeta3)
+        ! From plus prescription
+        K = integrate2(integrand, x, xi)
+        return
+        contains
+          function integrand(y) result(intd)
+              real(dp), intent(in) :: y
+              real(dp) :: intd
+              !
+              intd = KA1_GG_pls(x,y,xi) - KA1_GG_pls(y,x,xi)
+          end function integrand
+    end function KA1_GG_cst
+
+    function KA1_GG_half(X, Y) result(K)
+        ! Eq. (181)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: K
+        !
+        real(dp) :: piece1, piece2, piece3, piece4, piece5
+        real(dp) :: Xbar, Ybar, beta0
+        real(dp) :: GGfA, GGfbarA, GGfc, GGhA, GGhbarA
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        K = 0.0_dp
+        ! Some conditions to avoid nans and instability
+        if(abs(X-Y)  < eps) return
+        if(abs(Y)    < eps) return
+        if(abs(Ybar) < eps) return
+        if(abs(X)    < eps) return
+        if(abs(Xbar) < eps) return
+        beta0 = -11./3.*CA
+        ! Terms that contribute
+        GGfA    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   )
+        GGfbarA = 2.*GG_f_a(Xbar,Ybar) + GG_f_b(Xbar,Ybar)
+        GGfc    = GG_f_c(X,Y)
+        GGhA    = GG_h_A(X,Y)
+        GGhbarA = GG_hbar_A(Xbar,Y)
+        ! pieces 1, 2, 3 have support in both regions
+        piece1 = CA**2*( &
+            & (2./3.-2.*zeta2)*GGfA - 15./4.*X**2/Y**2 - 6.*X*Xbar/(Y*Ybar) + X*(X+Ybar)/(Y**2*Ybar) &
+            & - (2.*X/(Y*Ybar)-6.*X*Xbar/Ybar**2 + X**2/Ybar**2)*abslog(X/Y) &
+            & + (GGfA+2.*X**2/Ybar**2)*log2(X/Y) - (GGfA-GGfbarA)*logprod(X/Y,1.-X/Y) &
+            & - 0.5*GGhA + 0.5*GGhbarA &
+            & )
+        piece2 = 0.5*CA*beta0*( &
+            & -5./3.*GGfA - 5./2.*X**2/Y**2 + X*(Ybar+X*Y)/(Y**2*Ybar) &
+            & + X**2/Ybar**2*abslog(Y) + Xbar**2/Y**2*abslog(Xbar) &
+            & )
+        ! pieces 4, 5 have support only in the ERBL region
+        piece4 = CA**2*( &
+            & (3.*(Xbar-X)*X/(Y*Ybar) - 6.*X*Xbar/Ybar**2 + X**2/Ybar**2)*abslog(X) &
+            & -2.*X**2/Ybar**2*(log2(X)+logprod(X,Xbar)) + (3.*X-Y)/Ybar**2*logprod(X,Xbar) &
+            & )
+        ! Factor in the support regions
+        piece1 = piece1*rho_step(X,Y)
+        piece2 = piece2*rho_step(X,Y)
+        piece3 = 0.0_dp ! linear in nfl
+        piece4 = piece4*erbl_step(X)
+        piece5 = 0.0_dp ! linear in nfl
+        K = piece1 + piece2 + piece3 + piece4 + piece5
+    end function KA1_GG_half
+
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! GG kernel pieces: linear in nfl
 
@@ -847,6 +930,7 @@ module kernels_nlo
     end function KV1_GG_cst_nfl
 
     function KV1_GG_half_nfl(X, Y) result(K)
+        ! Eq. (185)
         real(dp), intent(in) :: X, Y
         real(dp) :: K
         !
@@ -888,5 +972,85 @@ module kernels_nlo
         piece5 = piece5*erbl_step(X)
         K = piece1 + piece2 + piece3 + piece4 + piece5
     end function KV1_GG_half_nfl
+
+    function KA1_GG_pls_nfl(x, y, xi) result(K)
+        ! Eq. (181)
+        ! Plus-type, plus distribution piece
+        real(dp), intent(in) :: x, y, xi
+        real(dp) :: K
+        !
+        real(dp) :: X1, X2, Y1, Y2
+        X1 = 0.5*(1.+x/xi)
+        X2 = 0.5*(1.-x/xi)
+        Y1 = 0.5*(1.+y/xi)
+        Y2 = 0.5*(1.-y/xi)
+        K = KA1_GG_half_nfl(X1,Y1) + KA1_GG_half_nfl(X2,Y2)
+        K = 0.5*K/xi
+    end function KA1_GG_pls_nfl
+
+    function KA1_GG_cst_nfl(x, xi) result(K)
+        ! Eq. (181)
+        ! Plus-type, constant term
+        real(dp), intent(in) :: x, xi
+        real(dp) :: K
+        !
+        ! Explicit term in Eqs. (175) and (176)
+        K = 1./54.*(29.*CA - 28.*CF)
+        ! From plus prescription
+        K = K + integrate2(integrand, x, xi)
+        return
+        contains
+        ! test...
+          function integrand(y) result(intd)
+              real(dp), intent(in) :: y
+              real(dp) :: intd
+              !
+              intd = KA1_GG_pls_nfl(x,y,xi) - KA1_GG_pls_nfl(y,x,xi)
+          end function integrand
+    end function KA1_GG_cst_nfl
+
+    function KA1_GG_half_nfl(X, Y) result(K)
+        ! Eq. (181)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: K
+        !
+        real(dp) :: piece1, piece2, piece3, piece4, piece5
+        real(dp) :: Xbar, Ybar, beta0
+        real(dp) :: GGfA, GGfbarA, GGfc!, GGhV, GGhbarV
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        K = 0.0_dp
+        ! Some conditions to avoid nans and instability
+        if(abs(X-Y)  < eps) return
+        if(abs(Y)    < eps) return
+        if(abs(Ybar) < eps) return
+        if(abs(X)    < eps) return
+        if(abs(Xbar) < eps) return
+        beta0 = 4./3.*TF
+        ! Terms that contribute
+        GGfA    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   )
+        GGfbarA = 2.*GG_f_a(Xbar,Ybar) + GG_f_b(Xbar,Ybar)
+        GGfc    = GG_f_c(X,Y)
+        ! pieces 1, 2, 3 have support in both regions
+        piece2 = 0.5*CA*beta0*( &
+            & -5./3.*GGfA - 5./2.*X**2/Y**2 + X*(Ybar+X*Y)/(Y**2*Ybar) &
+            & + X**2/Ybar**2*abslog(Y) + Xbar**2/Y**2*abslog(Xbar) &
+            & )
+        piece3 = CF*TF*( &
+            & 2.*X*(1.-2.*X*Ybar)/(Y**2*Ybar) + 2.*X**2/(Y*Ybar)*abslog(X/Y) &
+            & -X/Ybar**2*(2.*abslog(X/Y) + X*log2(X/Y)) &
+            & )
+        ! pieces 4, 5 have support only in the ERBL region
+        piece5 = CF*TF*( &
+            & X/Ybar**2*(2.*abslog(X) + X*log2(X)) &
+            & )
+        ! Factor in the support regions
+        piece1 = 0.0_dp ! nfl-independent
+        piece2 = piece2*rho_step(X,Y)
+        piece3 = piece3*rho_step(X,Y)
+        piece4 = 0.0_dp ! nfl-independent
+        piece5 = piece5*erbl_step(X)
+        K = piece1 + piece2 + piece3 + piece4 + piece5
+    end function KA1_GG_half_nfl
 
 end module kernels_nlo

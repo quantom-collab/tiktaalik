@@ -446,8 +446,8 @@ module matevo
               qG_nfl_1(ix,iy,iz) = pixel_conv(KA1_qG_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
               Gq_nfl_0(ix,iy,iz) = pixel_conv(KA1_Gq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
               Gq_nfl_1(ix,iy,iz) = pixel_conv(KA1_Gq_reg_nfl, zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              !GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls,     KA1_GG_cst,     xi_cache(iz), nx, ix, iy)
-              !GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls_nfl, KA1_GG_cst_nfl, xi_cache(iz), nx, ix, iy)
+              GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls,     KA1_GG_cst,     xi_cache(iz), nx, ix, iy)
+              GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls_nfl, KA1_GG_cst_nfl, xi_cache(iz), nx, ix, iy)
             end do
           end do
         end do
@@ -456,7 +456,7 @@ module matevo
           KA_SG_1(1:nx,     1:nx,:,     nfl) = real(nfl)*qq_nfl_1(:,:,:)
           KA_SG_1(1:nx,     nx+1:2*nx,:,nfl) = real(nfl)*qG_nfl_1(:,:,:)
           KA_SG_1(nx+1:2*nx,1:nx,     :,nfl) = Gq_nfl_0(:,:,:) + real(nfl)*Gq_nfl_1(:,:,:)
-          !KA_SG_1(nx+1:2*nx,nx+1:2*nx,:,nfl) = GG_nfl_0(:,:,:) + real(nfl)*GG_nfl_1(:,:,:)
+          KA_SG_1(nx+1:2*nx,nx+1:2*nx,:,nfl) = GG_nfl_0(:,:,:) + real(nfl)*GG_nfl_1(:,:,:)
         end do
         ! For the QQ block, the minus-type NS kernel is a contribution, so we need to add it.
         ! (See Eq. (178).)

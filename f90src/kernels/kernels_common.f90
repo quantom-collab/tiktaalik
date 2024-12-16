@@ -369,4 +369,34 @@ module kernels_common
             & + 2.*GGfbar*dilog(Xbar)
     end function GG_hbar_V
 
+    function GG_h_A(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, GGf, GGfbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        ! Eqs. (74) and (75)
+        GGf    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   )
+        GGfbar = 2.*GG_f_a(Xbar,Ybar) + GG_f_b(Xbar,Ybar)
+        h = 2.*GGfbar*logprod(Xbar,Y) - 2.*GGf*(dilog(X) + dilog(Ybar))
+    end function GG_h_A
+
+    function GG_hbar_A(X,Y) result(h)
+        ! Eq. (174)
+        real(dp), intent(in) :: X, Y
+        real(dp) :: h
+        !
+        real(dp) :: Xbar, Ybar, GGf, GGfbar
+        Xbar = 1.0_dp - X
+        Ybar = 1.0_dp - Y
+        GGf    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   )
+        GGfbar = 2.*GG_f_a(Xbar,Ybar) + GG_f_b(Xbar,Ybar)
+        h = (-GGfbar + GGf)*(2.*dilog(1.-X/Y) + log2(Y)) &
+            & + 2.*GGf*(dilog(Ybar) - logprod(X,Y)) &
+            & + 2.*GGfbar*dilog(Xbar)
+    end function GG_hbar_A
+
+
 end module kernels_common
