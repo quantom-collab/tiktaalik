@@ -43,7 +43,7 @@ module matevo
   ! In evolution matrices, indices are for (x,y,xi,Q2)
   ! For singlet/gluon, the first two indices go up to 2*nx,
   ! with the first nx values being singlet quark and the last nx being gluon.
-  real(dp), allocatable, dimension(:,:,:,:) :: MV_NS, MV_SG, MA_SG
+  real(dp), allocatable, dimension(:,:,:,:) :: M_NS_pls, M_NS_min, MV_SG, MA_SG
 
   public :: make_kernels, make_matrices, &
       & evomat_V_NS, evomat_V_SG, evomat_A_NS, evomat_A_SG, &
@@ -246,7 +246,7 @@ module matevo
     function evomat_V_NS(nx, nxi, nQ2) result(M)
         integer,  intent(in) :: nx, nxi, nQ2
         real(dp), dimension(nx, nx, nxi, nQ2) :: M
-        M = MV_NS
+        M = M_NS_pls
     end function evomat_V_NS
 
     function evomat_V_SG(nx, nxi, nQ2) result(M)
@@ -258,7 +258,7 @@ module matevo
     function evomat_A_NS(nx, nxi, nQ2) result(M)
         integer,  intent(in) :: nx, nxi, nQ2
         real(dp), dimension(nx, nx, nxi, nQ2) :: M
-        M = MV_NS
+        M = M_NS_min
     end function evomat_A_NS
 
     function evomat_A_SG(nx, nxi, nQ2) result(M)
@@ -396,12 +396,10 @@ module matevo
         integer, intent(in) :: nx, nxi
         integer :: ix, iy, iz, nfl
         real(dp), dimension(:,:,:), allocatable :: qq_nfl_1, qG_nfl_1, Gq_nfl_0, Gq_nfl_1, GG_nfl_0, GG_nfl_1
-        ! TODO : the rest
         if(allocated(KA_SG_1)) deallocate(KA_SG_1)
         if(allocated(KV_SG_1)) deallocate(KV_SG_1)
         allocate(KA_SG_1(2*nx,2*nx,nxi,nfl_min:nfl_max))
         allocate(KV_SG_1(2*nx,2*nx,nxi,nfl_min:nfl_max))
-        ! Temporary sub-matrix arrays ...  TODO: the rest
         allocate(qq_nfl_1(nx,nx,nxi))
         allocate(qG_nfl_1(nx,nx,nxi))
         allocate(Gq_nfl_0(nx,nx,nxi))
@@ -484,17 +482,21 @@ module matevo
         logical,  intent(in) :: l_nlo
         real(dp), dimension(nx,nx) :: idnx
         integer :: ix, ixi, iQ2, nfl
-        if(allocated(MV_NS)) deallocate(MV_NS)
-        allocate(MV_NS(nx,nx,nxi,nQ2))
+        if(allocated(M_NS_pls)) deallocate(M_NS_pls)
+        if(allocated(M_NS_min)) deallocate(M_NS_min)
+        allocate(M_NS_pls(nx,nx,nxi,nQ2))
+        allocate(M_NS_min(nx,nx,nxi,nQ2))
         ! Build an identity matrix
         idnx = 0.0_dp
         do ix=1, nx, 1
           idnx(ix,ix) = 1.0_dp
         end do
         ! Identity for no evolution at initial scale
-        MV_NS = 0.0_dp
+        M_NS_pls = 0.0_dp
+        M_NS_min = 0.0_dp
         do ixi=1, nxi, 1
-          MV_NS(:,:,ixi,1) = idnx
+          M_NS_pls(:,:,ixi,1) = idnx
+          M_NS_min(:,:,ixi,1) = idnx
         end do
         ! Build evolution matrices for all other scales
         do iQ2=2, nQ2, 1
@@ -502,10 +504,13 @@ module matevo
           do ixi=1, nxi, 1
             ! First, an evolution matrix for prior Q2 step to current Q2 step
             nfl = get_neff(Q2_array(iQ2-1))
-            MV_NS(:,:,ixi,iQ2) = idnx + &
-                & rk4_NS(nx, nxi, Q2_array(iQ2-1), Q2_array(iQ2), K_NS_0(:,:,ixi,nfl), K_zero(:,:))
+            M_NS_pls(:,:,ixi,iQ2) = idnx + &
+                & rk4_NS(nx, nxi, Q2_array(iQ2-1), Q2_array(iQ2), K_NS_0(:,:,ixi,nfl), KV_NS_1p(:,:,ixi,nfl))
+            M_NS_min(:,:,ixi,iQ2) = idnx + &
+                & rk4_NS(nx, nxi, Q2_array(iQ2-1), Q2_array(iQ2), K_NS_0(:,:,ixi,nfl), KV_NS_1m(:,:,ixi,nfl))
             ! Then matrix multiplication to turn into matrix from initial Q2 to current Q2
-            MV_NS(:,:,ixi,iQ2) = matmul(MV_NS(:,:,ixi,iQ2), MV_NS(:,:,ixi,iQ2-1))
+            M_NS_pls(:,:,ixi,iQ2) = matmul(M_NS_pls(:,:,ixi,iQ2), M_NS_pls(:,:,ixi,iQ2-1))
+            M_NS_min(:,:,ixi,iQ2) = matmul(M_NS_min(:,:,ixi,iQ2), M_NS_min(:,:,ixi,iQ2-1))
           end do
           !$OMP END PARALLEL DO
         end do
@@ -537,7 +542,7 @@ module matevo
             nfl = get_neff(Q2_array(iQ2-1))
             MV_SG(:,:,ixi,iQ2) = id2nx + &
                 & rk4_SG(nx, nxi, Q2_array(iQ2-1), Q2_array(iQ2), &
-                & KV_SG_0(:,:,ixi,nfl), K_zero_2(:,:))
+                & KV_SG_0(:,:,ixi,nfl), KV_SG_1(:,:,ixi,nfl))
             ! Then matrix multiplication to turn into matrix from initial Q2 to current Q2
             MV_SG(:,:,ixi,iQ2) = matmul(MV_SG(:,:,ixi,iQ2), MV_SG(:,:,ixi,iQ2-1))
           end do
@@ -571,7 +576,7 @@ module matevo
             nfl = get_neff(Q2_array(iQ2-1))
             MA_SG(:,:,ixi,iQ2) = id2nx + &
                 & rk4_SG(nx, nxi, Q2_array(iQ2-1), Q2_array(iQ2), &
-                & KA_SG_0(:,:,ixi,nfl), K_zero_2(:,:))
+                & KA_SG_0(:,:,ixi,nfl), KA_SG_1(:,:,ixi,nfl))
             ! Then matrix multiplication to turn into matrix from initial Q2 to current Q2
             MA_SG(:,:,ixi,iQ2) = matmul(MA_SG(:,:,ixi,iQ2), MA_SG(:,:,ixi,iQ2-1))
           end do
@@ -600,9 +605,15 @@ module matevo
         a_mid = get_alpha_QCD(Q2m) / (2.*pi)
         a_end = get_alpha_QCD(Q2f) / (2.*pi)
         ! The three matrices over each subinterval
-        M_ini = a_ini*K0 + a_ini**2*K1
-        M_mid = a_mid*K0 + a_mid**2*K1
-        M_end = a_end*K0 + a_end**2*K1
+        M_ini = a_ini*K0
+        M_mid = a_mid*K0
+        M_end = a_end*K0
+        ! Possible NLO corrections
+        if(l_nlo_cache) then
+          M_ini = M_ini + a_ini**2*K1
+          M_mid = M_mid + a_mid**2*K1
+          M_end = M_end + a_end**2*K1
+        endif
         ! The RK4 k-values
         W1 = M_ini
         W2 = M_mid + 0.5*h*matmul(M_mid,W1)
@@ -632,9 +643,15 @@ module matevo
         a_mid = get_alpha_QCD(Q2m) / (2.*pi)
         a_end = get_alpha_QCD(Q2f) / (2.*pi)
         ! The three matrices over each subinterval
-        M_ini = a_ini*K0 + a_ini**2*K1
-        M_mid = a_mid*K0 + a_mid**2*K1
-        M_end = a_end*K0 + a_end**2*K1
+        M_ini = a_ini*K0
+        M_mid = a_mid*K0
+        M_end = a_end*K0
+        ! Possible NLO corrections
+        if(l_nlo_cache) then
+          M_ini = M_ini + a_ini**2*K1
+          M_mid = M_mid + a_mid**2*K1
+          M_end = M_end + a_end**2*K1
+        endif
         ! The RK4 k-values
         W1 = M_ini
         W2 = M_mid + 0.5*h*matmul(M_mid,W1)
@@ -671,7 +688,7 @@ module matevo
     subroutine deallocate_all()
         if(allocated(K_NS_0))  deallocate(K_NS_0)
         if(allocated(KV_SG_0)) deallocate(KV_SG_0)
-        if(allocated(MV_NS))   deallocate(MV_NS)
+        if(allocated(M_NS_pls))   deallocate(M_NS_pls)
         if(allocated(MV_SG))   deallocate(MV_SG)
         if(allocated(KA_SG_0)) deallocate(KA_SG_0)
         if(allocated(MA_SG))   deallocate(MA_SG)
