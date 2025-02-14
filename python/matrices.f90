@@ -6,8 +6,9 @@
 ! wrappers for f2py to access
 
 module dummy
-  use pixelation
+  use gridspace
   use matevo
+  use pixelation
   use specfun ! TODO REMOVE BEFORE RELEASE
 
   implicit none
@@ -16,14 +17,28 @@ module dummy
   contains
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ! Pixelspace
+
+    subroutine pixelspace_wrap(nx, xi, grid_type, x)
+        integer,  parameter   :: dp = kind(1d0)
+        integer,  intent(in)  :: nx, grid_type
+        real(dp), intent(in)  :: xi
+        real(dp), intent(out) :: x(nx)
+        integer :: ix
+        do ix=1, nx, 1
+          x(ix) = push_forward(real(2*ix-1)/real(nx) - 1.0_dp, xi, nx, grid_type)
+        end do
+    end subroutine pixelspace_wrap
+
+    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Initialization routines, **MUST** be called first!
 
-    subroutine make_kernels_wrap(nx, nxi, xi_array)
+    subroutine make_kernels_wrap(nx, nxi, xi_array, grid_type)
         ! Initializes kernel matrices, using a particular xi array.
         integer,  parameter  :: dp = kind(1d0)
-        integer,  intent(in) :: nx, nxi
+        integer,  intent(in) :: nx, nxi, grid_type
         real(dp), intent(in) :: xi_array(nxi)
-        call make_kernels(nx, nxi, xi_array)
+        call make_kernels(nx, nxi, xi_array, grid_type)
     end subroutine make_kernels_wrap
 
     subroutine make_matrices_wrap(nQ2, Q2_array, l_nlo)

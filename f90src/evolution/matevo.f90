@@ -61,10 +61,10 @@ module matevo
     ! - make_matrices **MUST** be called before any routines to grab the
     !   evolution matrices are called.
 
-    subroutine make_kernels(nx, nxi, xi_array)
+    subroutine make_kernels(nx, nxi, xi_array, grid_type)
         ! Public method to initialize the kernel matrices
         ! This **MUST** be called before any evolution matrix routines!
-        integer,  intent(in) :: nx, nxi
+        integer,  intent(in) :: nx, nxi, grid_type
         real(dp), intent(in) :: xi_array(nxi)
         ! Everything is deallocated first as a safety measure
         call deallocate_all()
@@ -73,10 +73,10 @@ module matevo
         ! Initialize the 2D grids
         call initialize_2D(nx, nxi, xi_array)
         ! Initialize the kernel matrices
-        call make_kernels_NS_0(nx, nxi)
-        call make_kernels_NS_1(nx, nxi)
-        call make_kernels_SG_0(nx, nxi)
-        call make_kernels_SG_1(nx, nxi)
+        call make_kernels_NS_0(nx, nxi, grid_type)
+        call make_kernels_NS_1(nx, nxi, grid_type)
+        call make_kernels_SG_0(nx, nxi, grid_type)
+        call make_kernels_SG_1(nx, nxi, grid_type)
     end subroutine make_kernels
 
     subroutine make_matrices(nQ2, Q2_array, l_nlo)
@@ -270,8 +270,8 @@ module matevo
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Methods to make kernel matrices
 
-    subroutine make_kernels_NS_0(nx, nxi)
-        integer, intent(in) :: nx, nxi
+    subroutine make_kernels_NS_0(nx, nxi, grid_type)
+        integer, intent(in) :: nx, nxi, grid_type
         integer :: ix, iy, iz!, nfl
         if(allocated(K_NS_0)) deallocate(K_NS_0)
         allocate(K_NS_0(nx,nx,nxi,nfl_min:nfl_max))
@@ -280,29 +280,29 @@ module matevo
           do iy=1, nx, 1
             do iz=1, nxi, 1
               ! At leading order, no nfl dependence in QQ kernel.
-              K_NS_0(ix,iy,iz,:) = pixel_conv(zero_func, K0_qq_pls, K0_qq_cst, xi_cache(iz), nx, ix, iy)
+              K_NS_0(ix,iy,iz,:) = pixel_conv(zero_func, K0_qq_pls, K0_qq_cst, xi_cache(iz), nx, ix, iy, grid_type)
             end do
           end do
         end do
         !$OMP END PARALLEL DO
     end subroutine make_kernels_NS_0
 
-    subroutine make_kernels_NS_1(nx, nxi)
-        integer, intent(in) :: nx, nxi
+    subroutine make_kernels_NS_1(nx, nxi, grid_type)
+        integer, intent(in) :: nx, nxi, grid_type
         if(allocated(KV_NS_1p)) deallocate(KV_NS_1p)
         if(allocated(KV_NS_1m)) deallocate(KV_NS_1m)
         allocate(KV_NS_1p(nx,nx,nxi,nfl_min:nfl_max))
         allocate(KV_NS_1m(nx,nx,nxi,nfl_min:nfl_max))
-        call make_one_nlo_ns_kernel(nx, nxi, &
+        call make_one_nlo_ns_kernel(nx, nxi, grid_type, &
             & zero_func, KV1_NSp_pls, KV1_NSp_cst, zero_func, KV1_NSp_pls_nfl, KV1_NSp_cst_nfl, &
             & KV_NS_1p)
-        call make_one_nlo_ns_kernel(nx, nxi, &
+        call make_one_nlo_ns_kernel(nx, nxi, grid_type, &
             & zero_func, KV1_NSm_pls, KV1_NSm_cst, zero_func, KV1_NSm_pls_nfl, KV1_NSm_cst_nfl, &
             & KV_NS_1m)
     end subroutine make_kernels_NS_1
 
-    subroutine make_one_nlo_ns_kernel(nx, nxi, freg0, fpls0, fcst0, freg1, fpls1, fcst1, kernel)
-        integer, intent(in)   :: nx, nxi
+    subroutine make_one_nlo_ns_kernel(nx, nxi, grid_type, freg0, fpls0, fcst0, freg1, fpls1, fcst1, kernel)
+        integer, intent(in)   :: nx, nxi, grid_type
         real(dp), intent(out) :: kernel(nx,nx,nxi,nfl_min:nfl_max)
         real(dp), external :: freg0, fpls0, fcst0, freg1, fpls1, fcst1
         integer :: ix, iy, iz, nfl
@@ -313,8 +313,8 @@ module matevo
         do ix=1, nx, 1
           do iy=1, nx, 1
             do iz=1, nxi, 1
-              k0(ix,iy,iz,:) = pixel_conv(freg0, fpls0, fcst0, xi_cache(iz), nx, ix, iy)
-              k1(ix,iy,iz,:) = pixel_conv(freg1, fpls1, fcst1, xi_cache(iz), nx, ix, iy)
+              k0(ix,iy,iz,:) = pixel_conv(freg0, fpls0, fcst0, xi_cache(iz), nx, ix, iy, grid_type)
+              k1(ix,iy,iz,:) = pixel_conv(freg1, fpls1, fcst1, xi_cache(iz), nx, ix, iy, grid_type)
             end do
           end do
         end do
@@ -326,8 +326,8 @@ module matevo
         deallocate(k0, k1)
     end subroutine make_one_nlo_ns_kernel
 
-    subroutine make_kernels_SG_0(nx, nxi)
-        integer, intent(in) :: nx, nxi
+    subroutine make_kernels_SG_0(nx, nxi, grid_type)
+        integer, intent(in) :: nx, nxi, grid_type
         integer :: ix, iy, iz, nfl
         real(dp), dimension(:,:,:), allocatable :: qq_nfl_0, qG_nfl_1, Gq_nfl_0, GG_nfl_0, GG_nfl_1
         if(allocated(KA_SG_0)) deallocate(KA_SG_0)
@@ -347,10 +347,10 @@ module matevo
         do ix=1, nx, 1
           do iy=1, nx, 1
             do iz=1, nxi, 1
-              qG_nfl_1(ix,iy,iz) = pixel_conv(KA0_qG_reg, zero_func,  zero_func,  xi_cache(iz), nx, ix, iy)
-              Gq_nfl_0(ix,iy,iz) = pixel_conv(KA0_Gq_reg, zero_func,  zero_func,  xi_cache(iz), nx, ix, iy)
-              GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,  KA0_GG_pls, KA0_GG_cst, xi_cache(iz), nx, ix, iy)
-              GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,  zero_func,  KA0_GG_nfl, xi_cache(iz), nx, ix, iy)
+              qG_nfl_1(ix,iy,iz) = pixel_conv(KA0_qG_reg, zero_func,  zero_func,  xi_cache(iz), nx, ix, iy, grid_type)
+              Gq_nfl_0(ix,iy,iz) = pixel_conv(KA0_Gq_reg, zero_func,  zero_func,  xi_cache(iz), nx, ix, iy, grid_type)
+              GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,  KA0_GG_pls, KA0_GG_cst, xi_cache(iz), nx, ix, iy, grid_type)
+              GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,  zero_func,  KA0_GG_nfl, xi_cache(iz), nx, ix, iy, grid_type)
             end do
           end do
         end do
@@ -369,9 +369,9 @@ module matevo
         do ix=1, nx, 1
           do iy=1, nx, 1
             do iz=1, nxi, 1
-              qG_nfl_1(ix,iy,iz) = pixel_conv(KVmA0_qG_reg, zero_func, zero_func, xi_cache(iz), nx, ix, iy)
-              Gq_nfl_0(ix,iy,iz) = pixel_conv(KVmA0_Gq_reg, zero_func, zero_func, xi_cache(iz), nx, ix, iy)
-              GG_nfl_0(ix,iy,iz) = pixel_conv(KVmA0_GG_reg, zero_func, zero_func, xi_cache(iz), nx, ix, iy)
+              qG_nfl_1(ix,iy,iz) = pixel_conv(KVmA0_qG_reg, zero_func, zero_func, xi_cache(iz), nx, ix, iy, grid_type)
+              Gq_nfl_0(ix,iy,iz) = pixel_conv(KVmA0_Gq_reg, zero_func, zero_func, xi_cache(iz), nx, ix, iy, grid_type)
+              GG_nfl_0(ix,iy,iz) = pixel_conv(KVmA0_GG_reg, zero_func, zero_func, xi_cache(iz), nx, ix, iy, grid_type)
             end do
           end do
         end do
@@ -392,8 +392,8 @@ module matevo
         deallocate(GG_nfl_1)
     end subroutine make_kernels_SG_0
 
-    subroutine make_kernels_SG_1(nx, nxi)
-        integer, intent(in) :: nx, nxi
+    subroutine make_kernels_SG_1(nx, nxi, grid_type)
+        integer, intent(in) :: nx, nxi, grid_type
         integer :: ix, iy, iz, nfl
         real(dp), dimension(:,:,:), allocatable :: qq_nfl_1, qG_nfl_1, Gq_nfl_0, Gq_nfl_1, GG_nfl_0, GG_nfl_1
         if(allocated(KA_SG_1)) deallocate(KA_SG_1)
@@ -414,12 +414,12 @@ module matevo
         do ix=1, nx, 1
           do iy=1, nx, 1
             do iz=1, nxi, 1
-              qq_nfl_1(ix,iy,iz) = pixel_conv(KV1_qq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              qG_nfl_1(ix,iy,iz) = pixel_conv(KV1_qG_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              Gq_nfl_0(ix,iy,iz) = pixel_conv(KV1_Gq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              Gq_nfl_1(ix,iy,iz) = pixel_conv(KV1_Gq_reg_nfl, zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,      KV1_GG_pls,     KV1_GG_cst,     xi_cache(iz), nx, ix, iy)
-              GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,      KV1_GG_pls_nfl, KV1_GG_cst_nfl, xi_cache(iz), nx, ix, iy)
+              qq_nfl_1(ix,iy,iz) = pixel_conv(KV1_qq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy, grid_type)
+              qG_nfl_1(ix,iy,iz) = pixel_conv(KV1_qG_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy, grid_type)
+              Gq_nfl_0(ix,iy,iz) = pixel_conv(KV1_Gq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy, grid_type)
+              Gq_nfl_1(ix,iy,iz) = pixel_conv(KV1_Gq_reg_nfl, zero_func,      zero_func,      xi_cache(iz), nx, ix, iy, grid_type)
+              GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,      KV1_GG_pls,     KV1_GG_cst,     xi_cache(iz), nx, ix, iy, grid_type)
+              GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,      KV1_GG_pls_nfl, KV1_GG_cst_nfl, xi_cache(iz), nx, ix, iy, grid_type)
             end do
           end do
         end do
@@ -440,12 +440,12 @@ module matevo
         do ix=1, nx, 1
           do iy=1, nx, 1
             do iz=1, nxi, 1
-              qq_nfl_1(ix,iy,iz) = pixel_conv(KA1_qq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              qG_nfl_1(ix,iy,iz) = pixel_conv(KA1_qG_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              Gq_nfl_0(ix,iy,iz) = pixel_conv(KA1_Gq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              Gq_nfl_1(ix,iy,iz) = pixel_conv(KA1_Gq_reg_nfl, zero_func,      zero_func,      xi_cache(iz), nx, ix, iy)
-              GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls,     KA1_GG_cst,     xi_cache(iz), nx, ix, iy)
-              GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls_nfl, KA1_GG_cst_nfl, xi_cache(iz), nx, ix, iy)
+              qq_nfl_1(ix,iy,iz) = pixel_conv(KA1_qq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy, grid_type)
+              qG_nfl_1(ix,iy,iz) = pixel_conv(KA1_qG_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy, grid_type)
+              Gq_nfl_0(ix,iy,iz) = pixel_conv(KA1_Gq_reg,     zero_func,      zero_func,      xi_cache(iz), nx, ix, iy, grid_type)
+              Gq_nfl_1(ix,iy,iz) = pixel_conv(KA1_Gq_reg_nfl, zero_func,      zero_func,      xi_cache(iz), nx, ix, iy, grid_type)
+              GG_nfl_0(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls,     KA1_GG_cst,     xi_cache(iz), nx, ix, iy, grid_type)
+              GG_nfl_1(ix,iy,iz) = pixel_conv(zero_func,      KA1_GG_pls_nfl, KA1_GG_cst_nfl, xi_cache(iz), nx, ix, iy, grid_type)
             end do
           end do
         end do

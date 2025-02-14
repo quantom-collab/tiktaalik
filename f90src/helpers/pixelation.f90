@@ -7,6 +7,8 @@
 ! the course of 2024.
 
 module pixelation
+  use gridspace, only: pull_back
+
   implicit none
   private
 
@@ -17,21 +19,24 @@ module pixelation
   integer :: Nx_cache
   real(dp), dimension(:), allocatable :: w_table
 
-  public :: linspace, geomspace, interpixel, initialize_lagrange_weights
+  public :: interpixel, initialize_lagrange_weights
 
   contains
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! The interpixel
 
-    function interpixel(n_pixels, i, x) result(f)
+    function interpixel(n_pixels, i, x, xi, grid_type) result(f)
         ! Gives a function from polynomial interpolation of a pixel.
         ! One *MUST* call initialize_lagrange_weights before this!
-        integer, intent(in) :: n_pixels, i
-        real(dp), intent(in) :: x
+        integer,  intent(in) :: n_pixels, i, grid_type
+        real(dp), intent(in) :: x, xi
         real(dp) :: f
         !
-        call interpolate_lagrange_pixel(i, x, f)
+        real(dp) :: eta
+        ! Interpolate in the pulled back eta space
+        eta = pull_back(x, xi, n_pixels, grid_type)
+        call interpolate_lagrange_pixel(i, eta, f)
     end function interpixel
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,31 +62,6 @@ module pixelation
           end do
         end do
     end subroutine initialize_lagrange_weights
-
-    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ! numpy-like spaces
-
-    function linspace(a, b, N) result(xx)
-        real(dp), intent(in) :: a, b
-        integer, intent(in) :: N
-        real(dp) :: xx(N)
-        !
-        integer :: i
-        do i=1, N, 1
-          xx(i) = (b-a)*real(i-1)/real(N-1) + a
-        end do
-    end function linspace
-
-    function geomspace(a, b, N) result(xx)
-        real(dp), intent(in) :: a, b
-        integer, intent(in) :: N
-        real(dp) :: xx(N)
-        !
-        integer :: i
-        do i=1, N, 1
-          xx(i) = (b/a)**(real(i-1)/real(N-1)) * a
-        end do
-    end function geomspace
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Lagrange interpolation

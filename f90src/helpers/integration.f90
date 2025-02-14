@@ -1,11 +1,12 @@
 module integration
+  use gridspace, only: push_forward, pull_back, push_jacob
 
   implicit none
   private
 
   integer,  parameter :: dp = kind(1d0)
 
-  public :: integrate, integrate2
+  public :: integrate, integrate2, integrate3
 
   contains
 
@@ -62,6 +63,40 @@ module integration
           integral = integral + iqags(func,  abs(x)+eps,  ymax)
         endif
     end function integrate2
+
+    function integrate3(func, x, xi, n_pixels, grid_type) result(integral)
+        ! Do the spacing in eta instead, but break into regions the same way
+        real(dp), external   :: func
+        real(dp), intent(in) :: x, xi
+        integer,  intent(in) :: n_pixels, grid_type
+        real(dp) :: integral
+        !
+        real(dp), parameter :: eps = 1e-12_dp ! to avoid undefined behavior
+        real(dp) :: aa(7), ii(6), abserr(6), resabs(6), resasc(6)
+        integer :: i
+        aa(1) = pull_back( -1.0_dp, xi, n_pixels, grid_type)
+        aa(2) = pull_back( -abs(x), xi, n_pixels, grid_type)
+        aa(3) = pull_back(-abs(xi), xi, n_pixels, grid_type)
+        aa(4) = pull_back  (0.0_dp, xi, n_pixels, grid_type)
+        aa(5) = pull_back( abs(xi), xi, n_pixels, grid_type)
+        aa(6) = pull_back(  abs(x), xi, n_pixels, grid_type)
+        aa(7) = pull_back(  1.0_dp, xi, n_pixels, grid_type)
+        if(aa(3) < aa(2)) call swap(aa(2),aa(3))
+        if(aa(6) < aa(5)) call swap(aa(5),aa(6))
+        do i=1, 6, 1
+          call qk15(pulled_back_func, aa(i)+eps, aa(i+1)-eps, ii(i), abserr(i), resabs(i), resasc(i))
+        end do
+        integral = sum(ii)
+        return
+        contains
+          function pulled_back_func(eta) result(f)
+              real(dp), intent(in) :: eta
+              real(dp) :: f, J, x_
+              x_ = push_forward(eta, xi, n_pixels, grid_type)
+              J  = push_jacob(  eta, xi, n_pixels, grid_type)
+              f  = func(x_) * J
+          end function pulled_back_func
+    end function integrate3
 
     subroutine swap(x,y)
         real(dp), intent(inout) :: x, y

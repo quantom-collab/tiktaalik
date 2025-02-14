@@ -15,18 +15,22 @@ from . import pars
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # All-important initialization routines.
 
-def initialize_kernels(nx, xi):
+def initialize_kernels(nx, xi, grid_type=1):
     ''' Initializes all the kernels to be used to make evolution matrices.
     This **MUST** be called before any other methods:
     - Before methods to get kernels.
     - Before methods to get evolution matrices.
     - Before methods to initialize evolution matrices.
     INPUT:
-    - nx ... number of x points
-         must be even, at at least 6
-         will be spaced according to pixelspace(nx), defined below
-    - xi ... numpy.array, with the xi points to be used
-         if a scalar is passed, it will be turned into a one-component array
+    - nx .......... integer, number of x points.
+                    Must be even, and at least 6.
+                    Spacing depends on grid_type
+    - xi .......... numpy.array, with the xi points to be used; if a scalar
+                    is passed, it will be turned into a one-component array.
+    - grid_type ... integer, specifying the grid type.
+                    1 : nx linearly spaced points from -1+1/nx to 1-1/nx
+                    2 : nx/4 log-spaced points in each of the DGLAP regions,
+                        and nx/2 linearly-spaced points in the ERBL region
     OUTPUT:
     - None
     NOTES:
@@ -38,7 +42,7 @@ def initialize_kernels(nx, xi):
     if(np.isscalar(xi)):
         xi = np.array([xi])
     nxi = xi.shape[0]
-    f90src.make_kernels_wrap(nx, xi)
+    f90src.make_kernels_wrap(nx, xi, grid_type)
     return
 
 def initialize_evolution_matrices(Q2, nlo=False):
@@ -68,13 +72,15 @@ def initialize_evolution_matrices(Q2, nlo=False):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Spaces used
 
-def pixelspace(nx):
+def pixelspace(nx, xi=0.5, grid_type=1):
     ''' The x space used by tiktaalik. '''
     # TODO EXPLAIN
-    x_end = np.linspace(-1, 1, nx+1)
-    x_min = (x_end[0]   +x_end[1] )/2
-    x_max = (x_end[nx-1]+x_end[nx])/2
-    return np.linspace(x_min,x_max,nx)
+    #x_end = np.linspace(-1, 1, nx+1)
+    #x_min = (x_end[0]   +x_end[1] )/2
+    #x_max = (x_end[nx-1]+x_end[nx])/2
+    #return np.linspace(x_min,x_max,nx)
+    x = f90src.pixelspace_wrap(nx, xi, grid_type)
+    return x
 
 def Q2space(Q2i, Q2f, nQ2):
     ''' Creates something that's mostly a geomspace,
