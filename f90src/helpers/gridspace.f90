@@ -46,11 +46,9 @@ module gridspace
         case(3)
           ! Case 3 : tanh spacing in each of the three regions
           if(eta < -0.5) then
-            !print *, eta, -1.0_dp + 1./real(nx)
             x = tanhmap(eta, -1.0_dp, -0.5_dp, -1.0_dp,     -xi)
           elseif(eta <= 0.5) then
             x = tanhmap(eta, -0.5_dp,  0.5_dp,     -xi,      xi)
-            !x = 2.*xi*eta
           else
             x = tanhmap(eta,  0.5_dp,  1.0_dp,      xi,  1.0_dp)
           endif
@@ -183,7 +181,7 @@ module gridspace
 
     function tanhmap(y, ymin, ymax, xmin, xmax) result(x)
         real(dp), intent(in) :: y, ymin, ymax, xmin, xmax
-        real(dp) :: x, arg, c, f
+        real(dp) :: x, arg
         arg = lambda * (2.*y-ymax-ymin)/(ymax-ymin)
         x = 0.5*((xmax-xmin)*tanh(arg)/tanh(lambda) + (xmax+xmin))
     end function tanhmap
