@@ -8,14 +8,13 @@
 
 module convolution
   use gridspace,   only: push_forward
-  use integration, only: integrate, integrate3
+  use integration, only: integrate
   use pixelation,  only: interpixel
 
   implicit none
   private
 
   integer,  parameter, private :: dp = kind(1d0)
-  !integer,  parameter, private :: grid_type = 2 ! for now
 
   public :: pixel_conv
 
@@ -45,8 +44,7 @@ module convolution
         real(dp) :: x, eta
         eta = real(2*i-1)/real(n_pixels) - 1.
         x = push_forward(eta, xi, n_pixels, grid_type)
-        !shift = integrate(integrand, x, xi)
-        shift = integrate3(integrand, x, xi, n_pixels, grid_type)
+        shift = integrate(integrand, x, xi, n_pixels, grid_type)
         return
         contains
           function integrand(y) result(intd)
@@ -68,8 +66,7 @@ module convolution
         real(dp) :: x, eta
         eta = real(2*i-1)/real(n_pixels) - 1.
         x = push_forward(eta, xi, n_pixels, grid_type)
-        !shift = integrate(integrand, x, xi)
-        shift = integrate3(integrand, x, xi, n_pixels, grid_type)
+        shift = integrate(integrand, x, xi, n_pixels, grid_type)
         return
         contains
           function integrand(y) result(intd)
