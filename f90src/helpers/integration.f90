@@ -6,7 +6,7 @@ module integration
 
   integer,  parameter :: dp = kind(1d0)
 
-  public :: integrate, adpative_integrate
+  public :: integrate, adaptive_integrate
 
   contains
 
@@ -70,7 +70,7 @@ module integration
     !    integral = sum(ii)
     !end function integrate_depr
 
-    function adpative_integrate(func, x, xi) result(integral)
+    function adaptive_integrate(func, x, xi) result(integral)
         real(dp), external :: func
         real(dp), intent(in) :: x, xi
         real(dp) :: integral
@@ -94,7 +94,7 @@ module integration
           integral = integral + iqags(func, -abs(x)+eps,  abs(x)-eps)
           integral = integral + iqags(func,  abs(x)+eps,  ymax)
         endif
-    end function adpative_integrate
+    end function adaptive_integrate
 
     subroutine swap(x,y)
         real(dp), intent(inout) :: x, y

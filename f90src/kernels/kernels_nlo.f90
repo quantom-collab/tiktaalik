@@ -20,7 +20,7 @@
 
 module kernels_nlo
   use constants,      only: CF, CA, TF, pi, zeta2, zeta3
-  use integration,    only: integrate, adpative_integrate
+  use integration,    only: integrate, adaptive_integrate
   use kernels_common
 
   implicit none
@@ -67,7 +67,7 @@ module kernels_nlo
         ! Explicit term in Eq. (177)
         K = CF*(CF - 0.5*CA)*(6.5-6.*zeta2+4.*zeta3)
         ! From plus prescription
-        K = K + adpative_integrate(integrand, x, xi)
+        K = K + adaptive_integrate(integrand, x, xi)
         return
         contains
           function integrand(y) result(intd)
@@ -100,7 +100,7 @@ module kernels_nlo
         real(dp) :: K
         !
         ! Constant only from plus prescription
-        K = adpative_integrate(integrand, x, xi)
+        K = adaptive_integrate(integrand, x, xi)
         return
         contains
           function integrand(y) result(intd)
@@ -173,7 +173,7 @@ module kernels_nlo
         real(dp) :: K
         !
         ! From plus prescription
-        K = adpative_integrate(integrand, x, xi)
+        K = adaptive_integrate(integrand, x, xi)
         return
         contains
           function integrand(y) result(intd)
@@ -206,7 +206,7 @@ module kernels_nlo
         real(dp) :: K
         !
         ! Constant only from plus prescription
-        K = adpative_integrate(integrand, x, xi)
+        K = adaptive_integrate(integrand, x, xi)
         return
         contains
           function integrand(y) result(intd)
@@ -744,7 +744,7 @@ module kernels_nlo
         real(dp) :: K
         !
         ! From plus prescription
-        K = adpative_integrate(integrand, x, xi)
+        K = adaptive_integrate(integrand, x, xi)
         return
         contains
           function integrand(y) result(intd)
@@ -831,7 +831,7 @@ module kernels_nlo
         ! Explicit term in Eqs. (175) and (176)
         K = CA**2*(95./27.-14./3.*zeta2+2.*zeta3)
         ! From plus prescription
-        K = adpative_integrate(integrand, x, xi)
+        K = adaptive_integrate(integrand, x, xi)
         return
         contains
           function integrand(y) result(intd)
@@ -918,7 +918,7 @@ module kernels_nlo
         ! Explicit term in Eqs. (175) and (176)
         K = -1./108.*(35.*CA + 74.*CF)
         ! From plus prescription
-        K = K + adpative_integrate(integrand, x, xi)
+        K = K + adaptive_integrate(integrand, x, xi)
         return
         contains
         ! test...
@@ -998,7 +998,7 @@ module kernels_nlo
         ! Explicit term in Eqs. (175) and (176)
         K = 1./54.*(29.*CA - 28.*CF)
         ! From plus prescription
-        K = K + adpative_integrate(integrand, x, xi)
+        K = K + adaptive_integrate(integrand, x, xi)
         return
         contains
         ! test...
