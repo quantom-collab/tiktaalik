@@ -104,7 +104,7 @@ class Evolver:
         self.x   = pixelspace(self.nx)
         self.xi  = xi
         # Initialize kernels
-        matrices.initialize_kernels(nx, xi)
+        matrices.initialize_kernels(nx, xi, grid_type=grid_type)
         # Set up Q2 grid
         self.Q2i = Q2i
         self.Q2f = Q2f
@@ -214,7 +214,7 @@ class Evolver:
 
     ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def evolveSinglet(self, singlet_grid, gluon_grid, gpd_type='V'):
+    def evolveSinglet(self, singlet_grid, gluon_grid, gpd_type='V', nlo=False):
         ''' A method that evolves only a singlet quark grid and a gluon grid.
         REQUIRED INPUT:
             - singlet_grid ... np.array with dim(self.nx,self.nxi,...)
@@ -227,6 +227,7 @@ class Evolver:
         OPTIONAL INPUT:
             - gpd_type ..... either 'V' (default) or 'A', for
               helicity-independent (V) or helicity-dependent (A) evolution.
+            - nlo .......... either True or False (default)
         OUTPUT:
             - two GPD grids with dim(self.nx,self.nxi,...,self.nQ2),
               the first singlet and the second gluon.
@@ -247,31 +248,43 @@ class Evolver:
         new_gpd = np.copy(sg_grid)[...,np.newaxis]
         # Evolve through thresholds if needed
         if(self.pass_charm):
-            if(gpd_type=='V'):
+            if(gpd_type=='V' and nlo==False):
                 M_SG = self.Mevo_VSG_LO_mc2
-            elif(gpd_type=='A'):
+            elif(gpd_type=='V' and nlo==True):
+                M_SG = self.Mevo_VSG_NLO_mc2
+            elif(gpd_type=='A' and nlo==False):
                 M_SG = self.Mevo_ASG_LO_mc2
+            elif(gpd_type=='A' and nlo==True):
+                M_SG = self.Mevo_ASG_NLO_mc2
             added_gpd = np.einsum('ijkl,jk...->ik...l', M_SG, new_gpd[...,-1])
             new_gpd = np.concatenate((new_gpd, added_gpd[...,1:]), axis=-1)
         if(self.pass_bottom):
-            if(gpd_type=='V'):
+            if(gpd_type=='V' and nlo==False):
                 M_SG = self.Mevo_VSG_LO_mb2
-            elif(gpd_type=='A'):
+            elif(gpd_type=='V' and nlo==True):
+                M_SG = self.Mevo_VSG_NLO_mb2
+            elif(gpd_type=='A' and nlo==False):
                 M_SG = self.Mevo_ASG_LO_mb2
+            elif(gpd_type=='A' and nlo==True):
+                M_SG = self.Mevo_ASG_NLO_mb2
             added_gpd = np.einsum('ijkl,jk...->ik...l', M_SG, new_gpd[...,-1])
             new_gpd = np.concatenate((new_gpd, added_gpd[...,1:]), axis=-1)
         # Finish the evolution
-        if(gpd_type=='V'):
+        if(gpd_type=='V' and nlo==False):
             M_SG = self.Mevo_VSG_LO_Q2f
-        elif(gpd_type=='A'):
+        elif(gpd_type=='V' and nlo==False):
+            M_SG = self.Mevo_VSG_NLO_Q2f
+        elif(gpd_type=='A' and nlo==False):
             M_SG = self.Mevo_ASG_LO_Q2f
+        elif(gpd_type=='A' and nlo==True):
+            M_SG = self.Mevo_ASG_NLO_Q2f
         added_gpd = np.einsum('ijkl,jk...->ik...l', M_SG, new_gpd[...,-1])
         new_gpd = np.concatenate((new_gpd, added_gpd[...,1:]), axis=-1)
         new_singlet = new_gpd[0:self.nx,...]
         new_gluon = new_gpd[self.nx:2*self.nx,...]
         return new_singlet, new_gluon
 
-    def evolveNS(self, ns_grid, gpd_type='V'):
+    def evolveNS(self, ns_grid, gpd_type='V', nlo=False, ns_type=1):
         ''' A method that evolves only a non-singlet quark grid.
         REQUIRED INPUT:
             - ns_grid ... np.array with dim(self.nx,self.nxi,...)
@@ -282,6 +295,7 @@ class Evolver:
         OPTIONAL INPUT:
             - gpd_type ..... either 'V' (default) or 'A', for
               helicity-independent (V) or helicity-dependent (A) evolution.
+            - nlo .......... either True or False (default)
         OUTPUT:
             - a GPD grid with dim(self.nx,self.nxi,...,self.nQ2)
         NOTES:
@@ -293,28 +307,44 @@ class Evolver:
         assert(self.nx ==ns_grid.shape[0])
         assert(self.nxi==ns_grid.shape[1])
         assert( (gpd_type=='V') or (gpd_type=='A') )
+        assert( (ns_type==-1) or (ns_type==1) )
+        # Take advantage of V+=A-, V-=A+ to simplify code a bit
+        if(ns_type==-1):
+            gpd_type = swap_AV(gpd_type)
         # Start a new GPD with an extra dimension for Q2
         new_gpd = np.copy(ns_grid)[...,np.newaxis]
         # Evolve through thresholds if needed
         if(self.pass_charm):
-            if(gpd_type=='V'):
+            if(gpd_type=='V' and nlo==False):
                 M_NS = self.Mevo_VNS_LO_mc2
-            elif(gpd_type=='A'):
+            elif(gpd_type=='V' and nlo==True):
+                M_NS = self.Mevo_VNS_NLO_mc2
+            elif(gpd_type=='A' and nlo==False):
                 M_NS = self.Mevo_ANS_LO_mc2
+            elif(gpd_type=='A' and nlo==True):
+                M_NS = self.Mevo_ANS_NLO_mc2
             added_gpd = np.einsum('ijkl,jk...->ik...l', M_NS, new_gpd[...,-1])
             new_gpd = np.concatenate((new_gpd, added_gpd[...,1:]), axis=-1)
         if(self.pass_bottom):
-            if(gpd_type=='V'):
+            if(gpd_type=='V' and nlo==False):
                 M_NS = self.Mevo_VNS_LO_mb2
-            elif(gpd_type=='A'):
+            elif(gpd_type=='V' and nlo==True):
+                M_NS = self.Mevo_VNS_NLO_mb2
+            elif(gpd_type=='A' and nlo==False):
                 M_NS = self.Mevo_ANS_LO_mb2
+            elif(gpd_type=='A' and nlo==True):
+                M_NS = self.Mevo_ANS_NLO_mb2
             added_gpd = np.einsum('ijkl,jk...->ik...l', M_NS, new_gpd[...,-1])
             new_gpd = np.concatenate((new_gpd, added_gpd[...,1:]), axis=-1)
         # Finish the evolution
-        if(gpd_type=='V'):
+        if(gpd_type=='V' and nlo==False):
             M_NS = self.Mevo_VNS_LO_Q2f
-        elif(gpd_type=='A'):
+        elif(gpd_type=='V' and nlo==True):
+            M_NS = self.Mevo_VNS_NLO_Q2f
+        elif(gpd_type=='A' and nlo==False):
             M_NS = self.Mevo_ANS_LO_Q2f
+        elif(gpd_type=='A' and nlo==True):
+            M_NS = self.Mevo_ANS_NLO_Q2f
         added_gpd = np.einsum('ijkl,jk...->ik...l', M_NS, new_gpd[...,-1])
         new_gpd = np.concatenate((new_gpd, added_gpd[...,1:]), axis=-1)
         return new_gpd
@@ -508,3 +538,11 @@ def add_pad(grid, nrows):
     zero_grid = np.zeros((shape))
     new_grid = np.concatenate((grid, zero_grid), axis=0)
     return new_grid
+
+
+def swap_AV(gpd_type):
+    if(gpd_type=='A'):
+        return 'V'
+    if(gpd_type=='V'):
+        return 'A'
+    raise ValueError("gpd_type must be 'V' or 'A', not '{}'.".format(gpd_type))

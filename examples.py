@@ -184,8 +184,8 @@ tk.matrices.initialize_evolution_matrices(Q2, nlo=True)
 #   Belitsky:1999hf
 #   arxiv:hep-ph/9912379
 # We can fetch either type of matrix:
-M_NS_NLO_pls = tk.matrices.matrix_VNS(nstype=1) # nstype=1 by default as well
-M_NS_NLO_min = tk.matrices.matrix_VNS(nstype=-1)
+M_NS_NLO_pls = tk.matrices.matrix_VNS(ns_type=1) # ns_type=1 by default as well
+M_NS_NLO_min = tk.matrices.matrix_VNS(ns_type=-1)
 
 # Let's do some LO and NLO evolution, and save the arrays to plot at the end.
 ex3_x  = np.copy(x)
@@ -230,8 +230,8 @@ tk.matrices.initialize_evolution_matrices(Q2) # LO matrices are initialized
 M_NS_LO = tk.matrices.matrix_VNS()
 # NLO
 tk.matrices.initialize_evolution_matrices(Q2, nlo=True)
-M_NS_NLO_pls = tk.matrices.matrix_VNS(nstype=1)
-M_NS_NLO_min = tk.matrices.matrix_VNS(nstype=-1)
+M_NS_NLO_pls = tk.matrices.matrix_VNS(ns_type=1)
+M_NS_NLO_min = tk.matrices.matrix_VNS(ns_type=-1)
 
 # LO and NLO evolution with this grid spacing.
 ex4_x  = np.copy(x)
@@ -308,13 +308,13 @@ gpd_evo = Darwin.evolveGPDs(gpd_grid_ini, gpd_type='V')
 # initialization routine, without manually concatenating and slicing, etc.
 # For singlet, for instance:
 Sigma0 = u0 + d0 + s0 - np.flip(u0+d0+s0, axis=0)
-Sigma_evo, g_evo = Darwin.evolveSinglet(Sigma0, g0)
+Sigma_evo, g_evo = Darwin.evolveSinglet(Sigma0, g0, nlo=True)
 print("Shape of Sigma0: ", Sigma0.shape)
 print("Shape of Sigma_evo: ", Sigma_evo.shape)
 
 # For another exaple, let's do easy evolution of non-singlet
 umin0 = u0 + np.flip(u0, axis=0)
-umin_evo = Darwin.evolveNS(umin0)
+umin_evo = Darwin.evolveNS(umin0, nlo=True, ns_type=-1)
 print("Shape of umin0: ", umin0.shape)
 print("Shape of umin_evo: ", umin_evo.shape)
 

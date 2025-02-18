@@ -9,7 +9,6 @@ module dummy
   use gridspace
   use matevo
   use pixelation
-  use specfun ! TODO REMOVE BEFORE RELEASE
 
   implicit none
   public
@@ -192,20 +191,5 @@ module dummy
         !
         K = kernel_A_gg(Q2, nx, nxi, nfl, l_nlo)
     end subroutine evokernel_agg_wrap
-
-    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ! TESTING AREA (TODO REMOVE BEFORE RELEASE)
-
-    subroutine dilog_wrap(nx, x, y)
-        integer,  parameter   :: dp = kind(1d0)
-        integer,  intent(in)  :: nx
-        real(dp), intent(in)  :: x(nx)
-        real(dp), intent(out) :: y(nx)
-        !
-        integer :: i
-        do i=1, nx, 1
-          y(i) = dilog(x(i))
-        end do
-    end subroutine dilog_wrap
 
 end module dummy
