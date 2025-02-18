@@ -173,6 +173,7 @@ M_NS_LO = tk.matrices.matrix_VNS()
 
 # To initialize NLO matrices, we need to pass nlo=True as a kwarg:
 # Note that we don't need to reinitialize the kernels.
+print("Doing LO evolution.")
 tk.matrices.initialize_evolution_matrices(Q2, nlo=True)
 
 # Three are actually two kinds of non-singlet evolution matrices at NLO,
@@ -184,6 +185,7 @@ tk.matrices.initialize_evolution_matrices(Q2, nlo=True)
 #   Belitsky:1999hf
 #   arxiv:hep-ph/9912379
 # We can fetch either type of matrix:
+print("Doing NLO evolution.")
 M_NS_NLO_pls = tk.matrices.matrix_VNS(ns_type=1) # ns_type=1 by default as well
 M_NS_NLO_min = tk.matrices.matrix_VNS(ns_type=-1)
 
@@ -221,8 +223,14 @@ tk.matrices.initialize_kernels(nx, xi, grid_type=2)
 # You can also pass grid_type=2 to the pixelspace method to give an array spaced
 # according th the log-linear-log rule.
 # Since this depends on xi, you need to pass a xi value as well.
+print("-"*40)
+print("grid_type=1 (linear pixelspace):")
+print(tk.matrices.pixelspace(nx))
+print("-"*40)
 x = tk.matrices.pixelspace(nx, xi=xi, grid_type=2)
+print("grid_type=2 (log-linear-log), with xi=0.01:")
 print(x)
+print("-"*40)
 
 Q2 = np.array([4, 8, 12, 16]) # units of GeV**2
 # LO
