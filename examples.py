@@ -61,7 +61,7 @@ tk.matrices.initialize_kernels(nx=nx, xi=xi)
 # The GK model is designed to work at Q2 = 4 GeV**2.
 # Let's say we want to evolve to 5, 6 and 7 GeV**2.
 # Then we need an array with all four values:
-Q2 = np.array([4, 5, 6, 7]) # units of GeV**2
+Q2 = np.array([4, 8, 12, 16]) # units of GeV**2
 tk.matrices.initialize_evolution_matrices(Q2)
 
 # Now we're allowed to get the evolution matrices!
@@ -115,7 +115,7 @@ tk.matrices.initialize_kernels(nx, xi)
 # (After all, their dimensions did depend on nx and xi.)
 # We need to initialzie them again.
 # Let's stick with the same Q2 array as before.
-Q2 = np.array([4, 5, 6, 7]) # units of GeV**2
+Q2 = np.array([4, 8, 12, 16]) # units of GeV**2
 tk.matrices.initialize_evolution_matrices(Q2)
 
 # We should get the matrices again.
@@ -167,7 +167,7 @@ xi = 0.3
 tk.matrices.initialize_kernels(nx, xi)
 
 # When the evolution matrices are initialized, they're LO by default.
-Q2 = np.array([4, 5, 6, 7]) # units of GeV**2
+Q2 = np.array([4, 8, 12, 16]) # units of GeV**2
 tk.matrices.initialize_evolution_matrices(Q2) # LO matrices are initialized
 M_NS_LO = tk.matrices.matrix_VNS()
 
@@ -224,7 +224,7 @@ tk.matrices.initialize_kernels(nx, xi, grid_type=2)
 x = tk.matrices.pixelspace(nx, xi=xi, grid_type=2)
 print(x)
 
-Q2 = np.array([4, 5, 6, 7]) # units of GeV**2
+Q2 = np.array([4, 8, 12, 16]) # units of GeV**2
 # LO
 tk.matrices.initialize_evolution_matrices(Q2) # LO matrices are initialized
 M_NS_LO = tk.matrices.matrix_VNS()
@@ -258,7 +258,7 @@ nx = 60
 x = tk.matrices.pixelspace(nx)
 xi = np.array([0.1, 0.2, 0.3])
 Q2i = 4 # GeV**2
-Q2f = 25 # GeV**2 ... note that we pass the bottom mass threshold
+Q2f = 31 # GeV**2 ... note that we pass the bottom mass threshold
 nQ2 = 8
 # The Q2 grid used internally by the Evolver class is a custom Q2space:
 Q2 = tk.matrices.Q2space(Q2i, Q2f, nQ2)
