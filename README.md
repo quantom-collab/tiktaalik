@@ -21,7 +21,7 @@ Daniel Adamiak, Ian Cloet, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu,
 to all of whom I am grateful.
 The code would be slower and less accurate without their suggestions.
 
-# Reference
+## Reference
 
 If you use tiktaalik in your research, please cite the paper!
 The paper is [Kernel methods for evolution of generalized parton distributions](https://inspirehep.net/literature/2860861),
@@ -29,22 +29,24 @@ by A. Freese, D. Adamiak, I Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Z
 It's on arXiv at [2412.13450](https://arxiv.org/abs/2412.13450),
 and is currently under review for publication.
 
-# Dependencies
+## Dependencies
 
 - cmake version 3.12 or greater
 - A Fortran compiler (ideally gfortran)
 - Python 3.11 or less
 - python-numpy
 
+matplotlib is also optionally required to make and show plots in the example script,
+but not to actually use the evolution package.
+
+### Regarding Python version
+
 Because of a regression in Python 3.12 (the deprecation of distutils),
 tiktaalik cannot be built in Python>=3.12.
 Support for Python>=3.12 is delayed until I can figure out how
 to use an alternative build system.
 
-matplotlib is also optionally required to make and show plots in the example script,
-but not to actually use the evolution package.
-
-# Installation
+## Installation
 
 To install the package:
 ```
@@ -62,7 +64,7 @@ If the installation is not system-wide, your `LD_LIBRARY_PATH` and
 `PYTHONPATH` environment variables will need to be updated for the tiktaalik
 libraries to be found by Python.
 
-# Usage
+## Usage
 
 The user interfaces are all part of the tiktaalik Python package.
 One runs:
@@ -74,9 +76,9 @@ to import the package in Python.
 The examples script `examples.py` provided with the package
 provides demonstrations of how to use tiktaalik.
 
-# Recent updates
+## Recent updates
 
-## February XX, 2025
+### February XX, 2025
 
 tiktaalik now supports next-to-leading order (NLO) evolution of GPDs.
 NLO evolution is turned off by default,
