@@ -29,7 +29,7 @@ module gridspace
         real(dp) :: x
         !
         select case(grid_type)
-        case default
+        case(1)
           ! Case 1 : linear grid type, same as in original paper
           x = eta
         case(2)
@@ -41,6 +41,9 @@ module gridspace
           else
             x = (xi**2)**(1.-eta)
           endif
+        case default
+          ! Default to linear spacing given invalid grid_type
+          x = eta
         end select
     end function push_forward
 
@@ -53,7 +56,7 @@ module gridspace
         real(dp) :: eta
         !
         select case(grid_type)
-        case default
+        case(1)
           ! Case 1 : linear grid type, same as in original paper
           eta = x
         case(2)
@@ -65,6 +68,9 @@ module gridspace
           else
             eta = 0.5*log(xi**2/x)/log(xi)
           endif
+        case default
+          ! Default to linear spacing given invalid grid_type
+          eta = x
         end select
     end function pull_back
 
@@ -77,7 +83,7 @@ module gridspace
         real(dp) :: J
         !
         select case(grid_type)
-        case default
+        case(1)
           ! Case 1 : linear grid type, same as in original paper
           J = 1.0_dp
         case(2)
@@ -89,6 +95,9 @@ module gridspace
           else
             J = -(xi**2)**(1.-eta) * 2.*log(xi)
           endif
+        case default
+          ! Default to linear spacing given invalid grid_type
+          J = 1.0_dp
         end select
     end function push_jacob
 
