@@ -41,34 +41,12 @@ module integration
         contains
           function pulled_back_func(eta) result(f)
               real(dp), intent(in) :: eta
-              real(dp) :: f, J, x_
-              x_ = push_forward(eta, xi, n_pixels, grid_type)
-              J  = push_jacob(  eta, xi, n_pixels, grid_type)
-              f  = func(x_) * J
+              real(dp) :: f, J, y
+              y = push_forward(eta, xi, n_pixels, grid_type)
+              J = push_jacob(  eta, xi, n_pixels, grid_type)
+              f = func(y) * J
           end function pulled_back_func
     end function integrate
-
-    !function integrate_depr(func, x, xi) result(integral)
-    !    real(dp), external :: func
-    !    real(dp), intent(in) :: x, xi
-    !    real(dp) :: integral
-    !    !
-    !    real(dp) :: aa(7), ii(6), abserr(6), resabs(6), resasc(6)
-    !    integer :: i
-    !    aa(1) = -1.0_dp
-    !    aa(2) = -abs(x)
-    !    aa(3) = -abs(xi)
-    !    aa(4) = 0.0_dp
-    !    aa(5) = abs(xi)
-    !    aa(6) = abs(x)
-    !    aa(7) = 1.0_dp
-    !    if(aa(3) < aa(2)) call swap(aa(2),aa(3))
-    !    if(aa(6) < aa(5)) call swap(aa(5),aa(6))
-    !    do i=1, 6, 1
-    !      call qk21(func, aa(i), aa(i+1), ii(i), abserr(i), resabs(i), resasc(i))
-    !    end do
-    !    integral = sum(ii)
-    !end function integrate_depr
 
     function adaptive_integrate(func, x, xi) result(integral)
         real(dp), external :: func
@@ -156,8 +134,8 @@ module integration
 
         ! Declare local variables
         integer  :: j,jtw,jtwm1
-        real(dp) :: absc,centr,dhlgth,fc,fsum,fval1,fval2,fv1(10),fv2(10),hlgth, &
-            & resg,resk,reskh,wg(5),wgk(11),xgk(11)
+        real(dp) :: absc,centr,dhlgth,fc,fsum,fval1,fval2,fv1(10),fv2(10), &
+            & hlgth,resg,resk,reskh
 
         !   the abscissae and weights are given for the interval (-1,1).
         !   because of symmetry only the positive abscissae and their
@@ -169,23 +147,24 @@ module integration
         !            added to the 10-point Gauss rule
         !   wgk    - weights of the 21-point Kronrod rule
         !   wg     - weights of the 10-point Gauss rule
-
-        ! TODO: these should be made constant at compile time
-        xgk = (/ 9.956571630258081e-01_dp,     9.739065285171717e-01_dp, &
-               & 9.301574913557082e-01_dp,     8.650633666889845e-01_dp, &
-               & 7.808177265864169e-01_dp,     6.794095682990244e-01_dp, &
-               & 5.627571346686047e-01_dp,     4.333953941292472e-01_dp, &
-               & 2.943928627014602e-01_dp,     1.488743389816312e-01_dp, &
-               & 0.000000000000000_dp                               /)
-        wgk = (/ 1.169463886737187e-02_dp,     3.255816230796473e-02_dp, &
-               & 5.475589657435200e-02_dp,     7.503967481091995e-02_dp, &
-               & 9.312545458369761e-02_dp,     1.093871588022976e-01_dp, &
-               & 1.234919762620659e-01_dp,     1.347092173114733e-01_dp, &
-               & 1.427759385770601e-01_dp,     1.477391049013385e-01_dp, &
-               & 1.494455540029169e-01_dp                               /)
-        wg  = (/ 6.667134430868814e-02_dp,     1.494513491505806e-01_dp, &
-               & 2.190863625159820e-01_dp,     2.692667193099964e-01_dp, &
-               & 2.955242247147529e-01_dp                               /)
+        real(dp), parameter :: xgk(11) = (/ &
+            & 9.956571630258081e-01_dp,     9.739065285171717e-01_dp, &
+            & 9.301574913557082e-01_dp,     8.650633666889845e-01_dp, &
+            & 7.808177265864169e-01_dp,     6.794095682990244e-01_dp, &
+            & 5.627571346686047e-01_dp,     4.333953941292472e-01_dp, &
+            & 2.943928627014602e-01_dp,     1.488743389816312e-01_dp, &
+            & 0.000000000000000_dp                               /)
+        real(dp), parameter :: wgk(11) = (/ &
+            & 1.169463886737187e-02_dp,     3.255816230796473e-02_dp, &
+            & 5.475589657435200e-02_dp,     7.503967481091995e-02_dp, &
+            & 9.312545458369761e-02_dp,     1.093871588022976e-01_dp, &
+            & 1.234919762620659e-01_dp,     1.347092173114733e-01_dp, &
+            & 1.427759385770601e-01_dp,     1.477391049013385e-01_dp, &
+            & 1.494455540029169e-01_dp                               /)
+        real(dp), parameter :: wg(5)  = (/ &
+            & 6.667134430868814e-02_dp,     1.494513491505806e-01_dp, &
+            & 2.190863625159820e-01_dp,     2.692667193099964e-01_dp, &
+            & 2.955242247147529e-01_dp                               /)
 
         !   list of major variables
         !
@@ -254,154 +233,6 @@ module integration
         endif
 
     end subroutine qk21
-
-    ! ==========================================================================
-    ! qk15 routine from quadpack
-
-    !subroutine qk15(f,a,b,result,abserr,resabs,resasc)
-    !    !! QK15 carries out a 15 point Gauss-Kronrod quadrature rule.
-    !    !
-    !    ! This was originally from the quadpack package.
-    !    ! Only this subrotuine is used by tiktaalik, so this subroutine has been isolated.
-    !    ! Change by Ian Cloet: dp parameter used to control float precision.
-    !    !
-    !    ! Discussion:
-    !    !
-    !    !   This routine approximates
-    !    !     I = integral ( A <= X <= B ) F(X) dx
-    !    !   with an error estimate, and
-    !    !     J = integral ( A <= X <= B ) | F(X) | dx
-    !    !
-    !    ! Reference:
-    !    !
-    !    !   R Piessens, E de Doncker-Kapenger, C W Ueberhuber, D K Kahaner,
-    !    !   QUADPACK, a Subroutine Package for Automatic Integration,
-    !    !   Springer Verlag, 1983
-    !    !
-    !    ! Parameters:
-    !    !
-    !    !   Input, external real F, the name of the function routine, of the form
-    !    !     function f ( x )
-    !    !     real f
-    !    !     real x
-    !    !   which evaluates the integrand function.
-    !    !
-    !    !   Input, real A, B, the limits of integration.
-    !    !
-    !    !   Output, real RESULT, the estimated value of the integral.
-    !    !   RESULT is computed by applying the 15-point Kronrod rule (RESK)
-    !    !   obtained by optimal addition of abscissae to the 7-point Gauss rule
-    !    !   (RESG).
-    !    !
-    !    !   Output, real ABSERR, an estimate of | I - RESULT |.
-    !    !
-    !    !   Output, real RESABS, approximation to the integral of the absolute
-    !    !   value of F.
-    !    !
-    !    !   Output, real RESASC, approximation to the integral | F-I/(B-A) |
-    !    !   over [A,B].
-    !    !
-    !    ! Local Parameters:
-    !    !
-    !    !          the abscissae and weights are given for the interval (-1,1).
-    !    !          because of symmetry only the positive abscissae and their
-    !    !          corresponding weights are given.
-    !    !
-    !    !          xgk    - abscissae of the 15-point Kronrod rule
-    !    !                   xgk(2), xgk(4), ...  abscissae of the 7-point
-    !    !                   Gauss rule
-    !    !                   xgk(1), xgk(3), ...  abscissae which are optimally
-    !    !                   added to the 7-point Gauss rule
-    !    !
-    !    !          wgk    - weights of the 15-point Kronrod rule
-    !    !
-    !    !          wg     - weights of the 7-point Gauss rule
-    !    !
-    !    !          centr  - mid point of the interval
-    !    !          hlgth  - half-length of the interval
-    !    !          absc   - abscissa
-    !    !          fval*  - function value
-    !    !          resg   - result of the 7-point Gauss formula
-    !    !          resk   - result of the 15-point Kronrod formula
-    !    !          reskh  - approximation to the mean value of f over (a,b),
-    !    !                   i.e. to i/(b-a)
-
-    !    real(dp), external    :: f
-    !    real(dp), intent(in)  :: a,b
-    !    real(dp), intent(out) :: result,abserr,resabs,resasc
-
-    !    ! Declare local variables
-    !    integer  :: j,jtw,jtwm1
-    !    real(dp) :: absc,centr,dhlgth,fc,fsum,fval1,fval2,fv1(7),fv2(7),hlgth, &
-    !                resg,resk,reskh,wg(4),wgk(8),xgk(8)
-
-    !    ! TODO: these can probably be made constants at compile time
-    !    xgk = (/ 9.914553711208126e-01_dp,   9.491079123427585e-01_dp, &
-    !             8.648644233597691e-01_dp,   7.415311855993944e-01_dp, &
-    !             5.860872354676911e-01_dp,   4.058451513773972e-01_dp, &
-    !             2.077849550078985e-01_dp,   0.0_dp                  /)
-    !    wgk = (/ 2.293532201052922e-02_dp,   6.309209262997855e-02_dp, &
-    !             1.047900103222502e-01_dp,   1.406532597155259e-01_dp, &
-    !             1.690047266392679e-01_dp,   1.903505780647854e-01_dp, &
-    !             2.044329400752989e-01_dp,   2.094821410847278e-01_dp    /)
-    !    wg  = (/ 1.294849661688697e-01_dp,   2.797053914892767e-01_dp, &
-    !             3.818300505051189e-01_dp,   4.179591836734694e-01_dp    /)
-
-    !    centr  = 5.0e-01_dp*(a+b)
-    !    hlgth  = 5.0e-01_dp*(b-a)
-    !    dhlgth = abs(hlgth)
-
-    !    ! Compute the 15-point Kronrod approximation to the integral,
-    !    ! and estimate the absolute error.
-    !    fc = f(centr)
-    !    resg = fc*wg(4)
-    !    resk = fc*wgk(8)
-    !    resabs = abs(resk)
-
-    !    do j = 1, 3
-    !       jtw = j*2
-    !       absc = hlgth*xgk(jtw)
-    !       fval1 = f(centr-absc)
-    !       fval2 = f(centr+absc)
-    !       fv1(jtw) = fval1
-    !       fv2(jtw) = fval2
-    !       fsum = fval1+fval2
-    !       resg = resg+wg(j)*fsum
-    !       resk = resk+wgk(jtw)*fsum
-    !       resabs = resabs+wgk(jtw)*(abs(fval1)+abs(fval2))
-    !    enddo
-
-    !    do j = 1, 4
-    !       jtwm1 = j*2-1
-    !       absc = hlgth*xgk(jtwm1)
-    !       fval1 = f(centr-absc)
-    !       fval2 = f(centr+absc)
-    !       fv1(jtwm1) = fval1
-    !       fv2(jtwm1) = fval2
-    !       fsum = fval1+fval2
-    !       resk = resk+wgk(jtwm1)*fsum
-    !       resabs = resabs+wgk(jtwm1)*(abs(fval1)+abs(fval2))
-    !    enddo
-
-    !    reskh = resk * 5.0e-01_dp
-    !    resasc = wgk(8)*abs(fc-reskh)
-
-    !    do j = 1, 7
-    !       resasc = resasc+wgk(j)*(abs(fv1(j)-reskh)+abs(fv2(j)-reskh))
-    !    enddo
-
-    !    result = resk*hlgth
-    !    resabs = resabs*dhlgth
-    !    resasc = resasc*dhlgth
-    !    abserr = abs((resk-resg)*hlgth)
-
-    !    if ( resasc /= 0.0_dp.and.abserr /= 0.0_dp ) &
-    !       abserr = resasc*min ( 1.0_dp,(2.0e+02_dp*abserr/resasc)**1.5_dp)
-
-    !    if ( resabs > tiny ( resabs ) / (5.0e+01_dp* epsilon ( resabs ) ) ) &
-    !       abserr = max (( epsilon ( resabs ) *5.0e+01_dp)*resabs,abserr)
-
-    !end subroutine qk15
 
 
     ! ==========================================================================
