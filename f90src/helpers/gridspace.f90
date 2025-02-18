@@ -21,11 +21,9 @@ module gridspace
     ! Conversion between linear eta space and x space
 
     function push_forward(eta, xi, nx, grid_type) result(x)
-        ! TODO
         ! Grid types:
         ! - 1 ... linear
         ! - 2 ... log / linear / log
-        ! - 3 ... TODO
         real(dp), intent(in) :: eta, xi
         integer,  intent(in) :: nx, grid_type
         real(dp) :: x
@@ -43,24 +41,13 @@ module gridspace
           else
             x = (xi**2)**(1.-eta)
           endif
-        case(3)
-          ! Case 3 : tanh spacing in each of the three regions
-          if(eta < -0.5) then
-            x = tanhmap(eta, -1.0_dp, -0.5_dp, -1.0_dp,     -xi)
-          elseif(eta <= 0.5) then
-            x = tanhmap(eta, -0.5_dp,  0.5_dp,     -xi,      xi)
-          else
-            x = tanhmap(eta,  0.5_dp,  1.0_dp,      xi,  1.0_dp)
-          endif
         end select
     end function push_forward
 
     function pull_back(x, xi, nx, grid_type) result(eta)
-        ! TODO
         ! Grid types:
         ! - 1 ... linear
         ! - 2 ... log / linear / log
-        ! - 3 ... TODO
         real(dp), intent(in) :: x, xi
         integer,  intent(in) :: nx, grid_type
         real(dp) :: eta
@@ -78,24 +65,13 @@ module gridspace
           else
             eta = 0.5*log(xi**2/x)/log(xi)
           endif
-        case(3)
-          ! Case 3 : tanh spacing in each of the three regions
-          if(x < -xi) then
-            eta = atanhmap(x, -1.0_dp, -0.5_dp, -1.0_dp,     -xi)
-          elseif(x <= xi) then
-            eta = atanhmap(x, -0.5_dp,  0.5_dp,     -xi,      xi)
-          else
-            eta = atanhmap(x,  0.5_dp,  1.0_dp,      xi,  1.0_dp)
-          endif
         end select
     end function pull_back
 
     function push_jacob(eta, xi, nx, grid_type) result(J)
-        ! TODO
         ! Grid types:
         ! - 1 ... linear
         ! - 2 ... log / linear / log
-        ! - 3 ... TODO
         real(dp), intent(in) :: eta, xi
         integer,  intent(in) :: nx, grid_type
         real(dp) :: J
@@ -112,15 +88,6 @@ module gridspace
             J = 2.*xi
           else
             J = -(xi**2)**(1.-eta) * 2.*log(xi)
-          endif
-        case(3)
-          ! Case 3 : tanh spacing in each of the three regions
-          if(eta < -0.5) then
-            J = tanhmap_deriv(eta, -1.0_dp, -0.5_dp, -1.0_dp,     -xi)
-          elseif(eta <= 0.5) then
-            J = tanhmap_deriv(eta, -0.5_dp,  0.5_dp,     -xi,      xi)
-          else
-            J = tanhmap_deriv(eta,  0.5_dp,  1.0_dp,      xi,  1.0_dp)
           endif
         end select
     end function push_jacob
@@ -175,28 +142,5 @@ module gridspace
         xx = linspace(atanh(2.*a-1.), atanh(2.*b-1.), N)
         xx = 0.5*(1. + tanh(xx))
     end function tanhspace
-
-    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ! Maps related to tahn spacing
-
-    function tanhmap(y, ymin, ymax, xmin, xmax) result(x)
-        real(dp), intent(in) :: y, ymin, ymax, xmin, xmax
-        real(dp) :: x, arg
-        arg = lambda * (2.*y-ymax-ymin)/(ymax-ymin)
-        x = 0.5*((xmax-xmin)*tanh(arg)/tanh(lambda) + (xmax+xmin))
-    end function tanhmap
-
-    function atanhmap(x, ymin, ymax, xmin, xmax) result(y)
-        real(dp), intent(in) :: x, ymin, ymax, xmin, xmax
-        real(dp) :: y
-        y = 0.5*((ymax-ymin)/lambda*atanh(tanh(lambda)*(2.*x-xmax-xmin)/(xmax-xmin)) + (ymax+ymin))
-    end function atanhmap
-
-    function tanhmap_deriv(y, ymin, ymax, xmin, xmax) result(dxdy)
-        real(dp), intent(in) :: y, ymin, ymax, xmin, xmax
-        real(dp) :: dxdy, arg
-        arg = lambda * (2.*y-ymax-ymin)/(ymax-ymin)
-        dxdy = lambda * (xmax-xmin)/(ymax-ymin)/tanh(lambda) * (1. - (tanh(arg))**2)
-    end function tanhmap_deriv
 
 end module gridspace
