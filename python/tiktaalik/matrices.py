@@ -115,14 +115,14 @@ def get_nfl(Q2):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Routines to create evolution matrices
 
-def matrix_VNS():
+def matrix_VNS(nstype=1):
     # TODO DOCSTRING
     ''' Evolution matrix for *non-singlet* Q->Q, helicity-independent (V-type).
     '''
     nx  = f90src.get_nx_wrap()
     nxi = f90src.get_nxi_wrap()
     nQ2 = f90src.get_nq2_wrap()
-    M = f90src.evomatrix_vns_wrap(nx, nxi, nQ2)
+    M = f90src.evomatrix_vns_wrap(nx, nxi, nQ2, nstype)
     M[np.isnan(M)] = 0
     M[np.isinf(M)] = 0
     return M
@@ -139,7 +139,7 @@ def matrix_VSG():
     M[np.isinf(M)] = 0
     return M
 
-def matrix_ANS():
+def matrix_ANS(nstype=1):
     # TODO DOCSTRING
     ''' Evolution matrix for *non-singlet* Q->Q, helicity-dependent (A-type).
     The pom parameter must be 1 or -1, and distinguishes between
@@ -151,7 +151,7 @@ def matrix_ANS():
     nx  = f90src.get_nx_wrap()
     nxi = f90src.get_nxi_wrap()
     nQ2 = f90src.get_nq2_wrap()
-    M = f90src.evomatrix_ans_wrap(nx, nxi, nQ2)
+    M = f90src.evomatrix_ans_wrap(nx, nxi, nQ2, nstype)
     M[np.isnan(M)] = 0
     M[np.isinf(M)] = 0
     return M

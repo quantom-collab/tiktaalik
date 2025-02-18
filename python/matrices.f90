@@ -74,13 +74,13 @@ module dummy
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Evolution matrices
 
-    subroutine evomatrix_vns_wrap(nx, nxi, nQ2, M)
+    subroutine evomatrix_vns_wrap(nx, nxi, nQ2, nstype, M)
         ! QQ, helicity-independent
         integer,  parameter   :: dp = kind(1d0)
-        integer,  intent(in)  :: nx, nxi, nQ2
+        integer,  intent(in)  :: nx, nxi, nQ2, nstype
         real(dp), intent(out) :: M(nx,nx,nxi,nQ2)
         !
-        M = evomat_V_NS(nx, nxi, nQ2)
+        M = evomat_V_NS(nx, nxi, nQ2, nstype)
     end subroutine evomatrix_vns_wrap
 
     subroutine evomatrix_vsg_wrap(nx, nxi, nQ2, M)
@@ -92,13 +92,13 @@ module dummy
         M = evomat_V_SG(nx, nxi, nQ2)
     end subroutine evomatrix_vsg_wrap
 
-    subroutine evomatrix_ans_wrap(nx, nxi, nQ2, M)
+    subroutine evomatrix_ans_wrap(nx, nxi, nQ2, nstype, M)
         ! QQ, helicity-independent
         integer,  parameter   :: dp = kind(1d0)
-        integer,  intent(in)  :: nx, nxi, nQ2
+        integer,  intent(in)  :: nx, nxi, nQ2, nstype
         real(dp), intent(out) :: M(nx,nx,nxi,nQ2)
         !
-        M = evomat_A_NS(nx, nxi, nQ2)
+        M = evomat_A_NS(nx, nxi, nQ2, nstype)
     end subroutine evomatrix_ans_wrap
 
     subroutine evomatrix_asg_wrap(nx, nxi, nQ2, M)

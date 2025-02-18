@@ -243,10 +243,15 @@ module matevo
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Public methods to return evolution matrices
 
-    function evomat_V_NS(nx, nxi, nQ2) result(M)
-        integer,  intent(in) :: nx, nxi, nQ2
+    function evomat_V_NS(nx, nxi, nQ2, nstype) result(M)
+        integer,  intent(in) :: nx, nxi, nQ2, nstype
         real(dp), dimension(nx, nx, nxi, nQ2) :: M
-        M = M_NS_pls
+        select case(nstype)
+        case(1)
+          M = M_NS_pls
+        case(-1)
+          M = M_NS_min
+        end select
     end function evomat_V_NS
 
     function evomat_V_SG(nx, nxi, nQ2) result(M)
@@ -255,10 +260,15 @@ module matevo
         M = MV_SG
     end function evomat_V_SG
 
-    function evomat_A_NS(nx, nxi, nQ2) result(M)
-        integer,  intent(in) :: nx, nxi, nQ2
+    function evomat_A_NS(nx, nxi, nQ2, nstype) result(M)
+        integer,  intent(in) :: nx, nxi, nQ2, nstype
         real(dp), dimension(nx, nx, nxi, nQ2) :: M
-        M = M_NS_min
+        select case(nstype)
+        case(1)
+          M = M_NS_min
+        case(-1)
+          M = M_NS_pls
+        end select
     end function evomat_A_NS
 
     function evomat_A_SG(nx, nxi, nQ2) result(M)
