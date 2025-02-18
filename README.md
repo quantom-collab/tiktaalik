@@ -33,8 +33,13 @@ and is currently under review for publication.
 
 - cmake version 3.12 or greater
 - A Fortran compiler (ideally gfortran)
-- Python
+- Python 3.11 or less
 - python-numpy
+
+Because of a regression in Python 3.12 (the deprecation of distutils),
+tiktaalik cannot be built in Python>=3.12.
+Support for Python>=3.12 is delayed until I can figure out how
+to use an alternative build system.
 
 matplotlib is also optionally required to make and show plots in the example script,
 but not to actually use the evolution package.
@@ -100,9 +105,3 @@ By contrast, there is no maximum; tiktaalik is reliable all the way up to xi=1.
 
 Since tiktaalik defaults to linear spacing and leading order,
 any existing scripts that use tiktaalik will still give the same results as before.
-
-# Future updates
-
-tiktaalik currently uses numpy.distutils as part of its build process.
-Unfortunately distutils is considered deprecated and will become unavailable in Python 3.12.
-tiktaalik will be updated in the near future to use a different build process.
