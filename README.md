@@ -17,7 +17,7 @@ tiktaalik felt like a fitting name for a code package that performs
 a different kind of evolution.
 
 Some of my code was based on ideas suggested by
-Daniel Adamiak, Ian Cloet, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu,
+Daniel Adamiak, Ian Cloët, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu,
 to all of whom I am grateful.
 The code would be slower and less accurate without their suggestions.
 
@@ -25,7 +25,7 @@ The code would be slower and less accurate without their suggestions.
 
 If you use tiktaalik in your research, please cite the paper!
 The paper is [Kernel methods for evolution of generalized parton distributions](https://inspirehep.net/literature/2860861),
-by A. Freese, D. Adamiak, I Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Zaccheddu.
+by A. Freese, D. Adamiak, I. Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Zaccheddu.
 It's on arXiv at [2412.13450](https://arxiv.org/abs/2412.13450),
 and is currently under review for publication.
 
