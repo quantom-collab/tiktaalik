@@ -9,12 +9,7 @@ message(STATUS "Found Python: ${PYTHON}")
 add_custom_target(python_interface ALL)
 
 project(tiktaalik)
-set(tiktaalik_VERSION_MAJOR 0)
-set(tiktaalik_VERSION_MINOR 1)
-
-#IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-#  SET(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/binaries/" CACHE PATH "Potato" FORCE)
-#ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(PACKAGE_VERSION 0.2.0)
 
 enable_language(Fortran)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
