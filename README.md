@@ -84,7 +84,7 @@ tiktaalik now supports next-to-leading order (NLO) evolution of GPDs.
 NLO evolution is turned off by default,
 and can be activated using the kwarg `nlo=True`
 when initializing the evolution matrices, fetching the kernel matrices,
-or initializing an evolver class object.
+or evolving with an Evolver class object.
 Please see `examples.py` for examples of how to use NLO evolution.
 
 tiktaalik now permits two kinds of spacing for the x grid:
