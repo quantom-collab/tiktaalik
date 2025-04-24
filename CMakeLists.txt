@@ -9,7 +9,7 @@ message(STATUS "Found Python: ${PYTHON}")
 add_custom_target(python_interface ALL)
 
 project(tiktaalik)
-set(PACKAGE_VERSION 0.2.0)
+set(PACKAGE_VERSION 0.2.1)
 
 enable_language(Fortran)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -17,10 +17,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if(Fortran_COMPILER_NAME MATCHES "gfortran.*")
   set(CMAKE_Fortran_FLAGS "-Ofast -march=native -fopenmp \
+  -ftrampoline-impl=heap \
   -Wall -Wno-trampolines -Wno-unused-dummy-argument -Wno-conversion \
   -mcmodel=large")
 else()
-  set (CMAKE_Fortran_FLAGS "-O2")
+  set (CMAKE_Fortran_FLAGS "-O2 -ftrampoline-impl=heap")
 endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
