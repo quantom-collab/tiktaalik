@@ -26,8 +26,8 @@ The code would be slower and less accurate without their suggestions.
 If you use tiktaalik in your research, please cite the paper!
 The paper is [Kernel methods for evolution of generalized parton distributions](https://inspirehep.net/literature/2860861),
 by A. Freese, D. Adamiak, I. Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Zaccheddu.
-It's on arXiv at [2412.13450](https://arxiv.org/abs/2412.13450),
-and is currently under review for publication.
+It is published as *Compututer Physics Communications 311 (2025) 109552*,
+and the preprint is available on on arXiv at [2412.13450](https://arxiv.org/abs/2412.13450).
 
 # Dependencies
 
@@ -45,6 +45,10 @@ Because of a regression in Python 3.12 (the deprecation of distutils),
 tiktaalik cannot be built in Python>=3.12.
 Support for Python>=3.12 is delayed until I can figure out how
 to use an alternative build system.
+
+In the meantime, if your system has Python>=3.12 and you would like to use tiktaalik,
+I recommend using [pyenv](https://github.com/pyenv/pyenv),
+which allows you to install multiple Python versions and switch between them.
 
 # Installation
 
