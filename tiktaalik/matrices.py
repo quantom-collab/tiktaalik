@@ -8,7 +8,7 @@ This file contains methods to construct evolution matrices.
 """
 
 import numpy as np
-from matrices_wrap import dummy as f90src
+from .f90wrap.matrices import dummy as f90src
 
 from . import pars
 

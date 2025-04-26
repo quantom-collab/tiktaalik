@@ -12,6 +12,8 @@ build/
 dist/
 setuptools
 python/tiktaalik.egg-info/
+tiktaalik.egg-info/
+_skbuild/
 
 # Numpy output
 *.npy

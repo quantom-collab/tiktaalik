@@ -14,7 +14,7 @@ see /f90src/model/gk.f90 for more details.
 """
 
 import numpy as np
-from model_wrap import dummy as f90src
+from .f90wrap.model import dummy as f90src
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Model GPDs

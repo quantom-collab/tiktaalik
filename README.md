@@ -16,10 +16,9 @@ As an iconic example of biological evolution,
 tiktaalik felt like a fitting name for a code package that performs
 a different kind of evolution.
 
-Some of my code was based on ideas suggested by
-Daniel Adamiak, Ian Cloët, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu,
+Parts of the code were written with input and suggestions from
+Daniel Adamiak, Ian Cloët, Pi-Yueh Chuang, Sylvester Joosten, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu,
 to all of whom I am grateful.
-The code would be slower and less accurate without their suggestions.
 
 # Reference
 
@@ -31,42 +30,20 @@ and the preprint is available on on arXiv at [2412.13450](https://arxiv.org/abs/
 
 # Dependencies
 
-- cmake version 3.12 or greater
+- Python
 - A Fortran compiler (ideally gfortran)
-- Python 3.11 or less
-- python-numpy
-
-matplotlib is also optionally required to make and show plots in the example script,
-but not to actually use the evolution package.
-
-### Regarding Python version
-
-Because of a regression in Python 3.12 (the deprecation of distutils),
-tiktaalik cannot be built in Python>=3.12.
-Support for Python>=3.12 is delayed until I can figure out how
-to use an alternative build system.
-
-In the meantime, if your system has Python>=3.12 and you would like to use tiktaalik,
-I recommend using [pyenv](https://github.com/pyenv/pyenv),
-which allows you to install multiple Python versions and switch between them.
+- The dependencies listed in `pyproject.toml`
 
 # Installation
 
-To install the package:
+The package can be installed using pip.
+If you're in the main package directory
+(the one containing `pyproject.toml`),
+you just need to run:
 ```
-mkdir build
-cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/installation
-make
-make install
+pip install .
 ```
-The `-DCMAKE_INSTALL_PREFIX` may be unnecessary for a system-wide installation.
-For a system-wide installation, sudo privileges are probably necessary for the
-`make install` step.
-
-If the installation is not system-wide, your `LD_LIBRARY_PATH` and
-`PYTHONPATH` environment variables will need to be updated for the tiktaalik
-libraries to be found by Python.
+to install.
 
 # Usage
 
@@ -77,10 +54,19 @@ import tiktaalik as tk
 ```
 to import the package in Python.
 
-The examples script `examples.py` provided with the package
+The examples script `examples/examples.py` provided with the package
 provides demonstrations of how to use tiktaalik.
+After tiktaalik has been installed, just run the examples script
+to see tiktaalik in action.
 
 # Recent updates
+
+### April XX, 2025
+
+The build system was refactored to use scikit-build instead of numpy.distutils,
+since the latter is discontinued as of Python 3.12.
+In addition to the package being future-proofed, it is now easier to install,
+and the installation is managed by pip.
 
 ### February 18, 2025
 
