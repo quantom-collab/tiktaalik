@@ -10,3 +10,24 @@ build-backend = "setuptools.build_meta"
 
 [tool.scikit-build]
 build.verbose = true
+
+[project]
+name = "tiktaalik"
+version = "0.3.0"
+description = "Finite element code for evolution of generalized parton distributions"
+authors = [
+  {name = "Adam Freese", email = "afreese@jlab.org"}
+]
+maintainers = [
+  {name = "Adam Freese", email = "afreese@jlab.org"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+dependencies = [
+  "numpy",
+  "matplotlib"
+]
+
+[project.urls]
+Homepage = "https://github.com/quantom-collab/tiktaalik"
+Repository = "https://github.com/quantom-collab/tiktaalik.git"
