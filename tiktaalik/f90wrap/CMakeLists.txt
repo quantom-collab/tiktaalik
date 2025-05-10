@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.18)
-
 # Function to generate an f2py module and add it to a list of modules to install
 function(gen_f2pymod f2py_module_name module_list)
   set(fortran_src_file "${CMAKE_CURRENT_SOURCE_DIR}/${f2py_module_name}.f90")

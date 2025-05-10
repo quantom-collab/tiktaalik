@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.18)
-
 # Fortran needed
 find_program(CMAKE_Fortran_COMPILER $ENV{FC} gfortran PATH)
 enable_language(Fortran)
@@ -7,14 +5,22 @@ enable_language(Fortran)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_program(CMAKE_Fortran_COMPILER $ENV{FC} gfortran PATH)
 
+# TODO: clean up/sanitize Fortran flags
+
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if(Fortran_COMPILER_NAME MATCHES "gfortran.*")
   set(CMAKE_Fortran_FLAGS "-Ofast -march=native -fopenmp \
-  -ftrampoline-impl=heap \
   -Wall -Wno-trampolines -Wno-unused-dummy-argument -Wno-conversion \
   -mcmodel=large")
 else()
-  set (CMAKE_Fortran_FLAGS "-O2 -ftrampoline-impl=heap")
+  set (CMAKE_Fortran_FLAGS "-O2")
+endif()
+
+# See if the nested functions can be implemented on the heap
+include(CheckFortranCompilerFlag)
+check_fortran_compiler_flag("-ftrampoline-impl=heap" can_use_heap)
+if(can_use_heap)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -ftrampoline-impl=heap")
 endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
