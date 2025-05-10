@@ -2,10 +2,10 @@
 requires = [
   "setuptools>=42,<65",
   "scikit-build>=0.13",
-  "cmake>=3.18",
   "ninja",
   "numpy",
-  "meson"
+  "meson",
+  "cmake>=3.18"
 ]
 build-backend = "setuptools.build_meta"
 
