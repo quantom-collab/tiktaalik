@@ -1,0 +1,34 @@
+[build-system]
+requires = [
+  "setuptools>=42,<65; python_version<'3.10'",
+  "setuptools>=67; python_version>='3.10'",
+  "scikit-build>=0.13",
+  "ninja",
+  "numpy",
+  "meson",
+  "cmake>=3.18"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.scikit-build]
+build.verbose = true
+
+[project]
+name = "tiktaalik"
+version = "0.3.0"
+description = "Finite element code for evolution of generalized parton distributions"
+authors = [
+  {name = "Adam Freese", email = "afreese@jlab.org"}
+]
+maintainers = [
+  {name = "Adam Freese", email = "afreese@jlab.org"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+dependencies = [
+  "numpy",
+]
+
+[project.urls]
+Homepage = "https://github.com/quantom-collab/tiktaalik"
+Repository = "https://github.com/quantom-collab/tiktaalik.git"

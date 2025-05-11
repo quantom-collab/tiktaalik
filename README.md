@@ -3,84 +3,67 @@
 **tiktaalik** is a package for creating matrices to do ultra-fast x-space evolution
 of generalized parton distributions (GPDs).
 
-This package was created by Adam Freese for the
-[QUAntum chromodynamics Nuclear TOMography (QuantOm) collaboration](https://quantom-collab.github.io/),
-which also supported the creation of this code.
-The package contains several Fortran90 codes that were previously
-developed by other authors (e.g., integration methods and special functions).
-Attributions to the original authors are present in the files containing these codes.
-
 The package tiktaalik is named after the animal tiktaalik,
 a transitional genus of fish with several early features of amphibians.
 As an iconic example of biological evolution,
 tiktaalik felt like a fitting name for a code package that performs
 a different kind of evolution.
 
-Some of my code was based on ideas suggested by
-Daniel Adamiak, Ian Cloët, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu,
-to all of whom I am grateful.
-The code would be slower and less accurate without their suggestions.
+### Authors
 
-# Reference
+The lead developer of the code is Adam Freese.
+The code was developed with the input of
+Daniel Adamiak, Ian Cloët, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu.
 
-If you use tiktaalik in your research, please cite the paper!
-The paper is [Kernel methods for evolution of generalized parton distributions](https://inspirehep.net/literature/2860861),
-by A. Freese, D. Adamiak, I. Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Zaccheddu.
-It is published as *Compututer Physics Communications 311 (2025) 109552*,
-and the preprint is available on on arXiv at [2412.13450](https://arxiv.org/abs/2412.13450).
+The package contains several Fortran90 codes that were previously
+developed by other authors (e.g., integration methods and special functions).
+Attributions to the original authors are present in the files containing these codes.
 
-# Dependencies
+Helpful suggestions were additionally provided by Pi-Yuen Chuang and Sylvester Joosten.
 
-- cmake version 3.12 or greater
-- A Fortran compiler (ideally gfortran)
-- Python 3.11 or less
-- python-numpy
+### QuantOm Collaboration
 
-matplotlib is also optionally required to make and show plots in the example script,
-but not to actually use the evolution package.
+This package was created for the
+[QUAntum chromodynamics Nuclear TOMography (QuantOm) collaboration](https://quantom-collab.github.io/),
+which supported the creation of this code.
 
-### Regarding Python version
+### References
 
-Because of a regression in Python 3.12 (the deprecation of distutils),
-tiktaalik cannot be built in Python>=3.12.
-Support for Python>=3.12 is delayed until I can figure out how
-to use an alternative build system.
-
-In the meantime, if your system has Python>=3.12 and you would like to use tiktaalik,
-I recommend using [pyenv](https://github.com/pyenv/pyenv),
-which allows you to install multiple Python versions and switch between them.
+- A. Freese, D. Adamiak, I. Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Zaccheddu.
+  [Computer Physics Communications 311 (2025) 109552](https://inspirehep.net/literature/2860861)
 
 # Installation
 
-To install the package:
+The package can be installed using pip.
+If you're in the main package directory
+(the one containing `pyproject.toml`),
+you just need to run:
 ```
-mkdir build
-cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/installation
-make
-make install
+pip install .
 ```
-The `-DCMAKE_INSTALL_PREFIX` may be unnecessary for a system-wide installation.
-For a system-wide installation, sudo privileges are probably necessary for the
-`make install` step.
+to install.
 
-If the installation is not system-wide, your `LD_LIBRARY_PATH` and
-`PYTHONPATH` environment variables will need to be updated for the tiktaalik
-libraries to be found by Python.
+### Dependencies
+
+- Python
+- A Fortran compiler (ideally gfortran)
+- The dependencies listed in `pyproject.toml`
+
+matplotlib is also required to run `examples/examples.py`,
+but not to install or run tiktaalik itself.
 
 # Usage
 
-The user interfaces are all part of the tiktaalik Python package.
-One runs:
-```
-import tiktaalik as tk
-```
-to import the package in Python.
-
-The examples script `examples.py` provided with the package
-provides demonstrations of how to use tiktaalik.
+See `examples/examples.py` for examples of usage.
 
 # Recent updates
+
+### May XX, 2025
+
+The build system was refactored to use scikit-build instead of numpy.distutils,
+since the latter is discontinued as of Python 3.12.
+In addition to the package being future-proofed, it is now easier to install,
+and the installation is managed by pip.
 
 ### February 18, 2025
 

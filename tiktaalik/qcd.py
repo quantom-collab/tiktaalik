@@ -1,5 +1,5 @@
 import numpy as np
-from qcd_wrap import dummy as f90src
+from .f90wrap.qcd import dummy as f90src
 
 def alphaQCD(Q2):
     if(np.isscalar(Q2)):
