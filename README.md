@@ -3,36 +3,37 @@
 **tiktaalik** is a package for creating matrices to do ultra-fast x-space evolution
 of generalized parton distributions (GPDs).
 
-This package was created by Adam Freese for the
-[QUAntum chromodynamics Nuclear TOMography (QuantOm) collaboration](https://quantom-collab.github.io/),
-which also supported the creation of this code.
-The package contains several Fortran90 codes that were previously
-developed by other authors (e.g., integration methods and special functions).
-Attributions to the original authors are present in the files containing these codes.
-
 The package tiktaalik is named after the animal tiktaalik,
 a transitional genus of fish with several early features of amphibians.
 As an iconic example of biological evolution,
 tiktaalik felt like a fitting name for a code package that performs
 a different kind of evolution.
 
-Parts of the code were written with input and suggestions from
-Daniel Adamiak, Ian Cloët, Pi-Yueh Chuang, Sylvester Joosten, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu,
-to all of whom I am grateful.
+### Authors
 
-# Reference
+The lead developer of the code is Adam Freese.
+The code was developed with the input of
+Daniel Adamiak, Ian Cloët, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu.
 
-If you use tiktaalik in your research, please cite the paper!
-The paper is [Kernel methods for evolution of generalized parton distributions](https://inspirehep.net/literature/2860861),
-by A. Freese, D. Adamiak, I. Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Zaccheddu.
-It is published as *Compututer Physics Communications 311 (2025) 109552*,
-and the preprint is available on on arXiv at [2412.13450](https://arxiv.org/abs/2412.13450).
+The package contains several Fortran90 codes that were previously
+developed by other authors (e.g., integration methods and special functions).
+Attributions to the original authors are present in the files containing these codes.
 
-# Dependencies
+Helpful suggestions were additionally provided by Pi-Yuen Chuang and Sylvester Joosten.
 
-- Python
-- A Fortran compiler (ideally gfortran)
-- The dependencies listed in `pyproject.toml`
+### QuantOm Collaboration
+
+This package was created for the
+[QUAntum chromodynamics Nuclear TOMography (QuantOm) collaboration](https://quantom-collab.github.io/),
+which supported the creation of this code.
+
+### References
+
+- A. Freese, D. Adamiak, I. Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Zaccheddu.
+  [Computer Physics Communications 311 (2025) 109552](https://inspirehep.net/literature/2860861)
+
+matplotlib is also required to run `examples/examples.py`,
+but not to install or run tiktaalik itself.
 
 # Installation
 
@@ -45,23 +46,19 @@ pip install .
 ```
 to install.
 
+### Dependencies
+
+- Python
+- A Fortran compiler (ideally gfortran)
+- The dependencies listed in `pyproject.toml`
+
 # Usage
 
-The user interfaces are all part of the tiktaalik Python package.
-One runs:
-```
-import tiktaalik as tk
-```
-to import the package in Python.
-
-The examples script `examples/examples.py` provided with the package
-provides demonstrations of how to use tiktaalik.
-After tiktaalik has been installed, just run the examples script
-to see tiktaalik in action.
+See `examples/examples.py` for examples of usage.
 
 # Recent updates
 
-### April XX, 2025
+### May XX, 2025
 
 The build system was refactored to use scikit-build instead of numpy.distutils,
 since the latter is discontinued as of Python 3.12.
