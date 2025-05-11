@@ -32,9 +32,6 @@ which supported the creation of this code.
 - A. Freese, D. Adamiak, I. Cloët, W. Melnitchouk, J.-W. Qiu, N. Sato, and M. Zaccheddu.
   [Computer Physics Communications 311 (2025) 109552](https://inspirehep.net/literature/2860861)
 
-matplotlib is also required to run `examples/examples.py`,
-but not to install or run tiktaalik itself.
-
 # Installation
 
 The package can be installed using pip.
@@ -51,6 +48,9 @@ to install.
 - Python
 - A Fortran compiler (ideally gfortran)
 - The dependencies listed in `pyproject.toml`
+
+matplotlib is also required to run `examples/examples.py`,
+but not to install or run tiktaalik itself.
 
 # Usage
 
