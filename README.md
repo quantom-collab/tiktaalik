@@ -58,7 +58,7 @@ See `examples/examples.py` for examples of usage.
 
 # Recent updates
 
-### May XX, 2025
+### May 10, 2025
 
 The build system was refactored to use scikit-build instead of numpy.distutils,
 since the latter is discontinued as of Python 3.12.
