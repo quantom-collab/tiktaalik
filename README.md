@@ -19,7 +19,7 @@ The package contains several Fortran90 codes that were previously
 developed by other authors (e.g., integration methods and special functions).
 Attributions to the original authors are present in the files containing these codes.
 
-Helpful suggestions were additionally provided by Pi-Yuen Chuang and Sylvester Joosten.
+Helpful suggestions were additionally provided by Pi-Yueh Chuang and Sylvester Joosten.
 
 ### QuantOm Collaboration
 
