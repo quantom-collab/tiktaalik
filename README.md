@@ -59,6 +59,7 @@ See `examples/examples.py` for examples of usage.
 There are lower limits to the skewness (xi) at which tiktaalik can be trusted:
 - Leading-order (LO) evolution is numerically stable down to xi=3e-6
 - Next-to-leading order (NLO) evolution is numerically stable down to xi=2e-5
+
 One must use `grid_type=2` for small xi values such as these.
 
 Additionally, the GK model code provided with the package
