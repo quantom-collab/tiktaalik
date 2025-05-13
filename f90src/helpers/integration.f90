@@ -53,25 +53,14 @@ module integration
         real(dp), intent(in) :: x, xi
         real(dp) :: integral
         !
-        real(dp), parameter :: eps  =  1e-12_dp ! to avoid undefined behavior
+        real(dp), parameter :: eps  =  1e-15_dp ! to avoid undefined behavior
         real(dp), parameter :: ymin = -1.0_dp + eps
         real(dp), parameter :: ymax =  1.0_dp - eps
         integral = 0.0_dp
-        if(abs(x-xi) < eps) then
-          integral = 0.0_dp
-        elseif(abs(x+xi) < eps) then
-          integral = 0.0_dp
-        elseif(x > xi) then
-          integral = integral + iqags(func,  ymin,        x-eps)
-          integral = integral + iqags(func,  x+eps,       ymax)
-        elseif(x < -xi) then
-          integral = integral + iqags(func,  ymin,        x-eps)
-          integral = integral + iqags(func,  x+eps,       ymax)
-        elseif(x > -xi .and. x < xi) then
-          integral = integral + iqags(func,  ymin,       -abs(x)-eps)
-          integral = integral + iqags(func, -abs(x)+eps,  abs(x)-eps)
-          integral = integral + iqags(func,  abs(x)+eps,  ymax)
-        endif
+        ! New thingy...?
+        integral = integral + iqags(func,  ymin,       -abs(x)-eps)
+        integral = integral + iqags(func, -abs(x)+eps,  abs(x)-eps)
+        integral = integral + iqags(func,  abs(x)+eps,  ymax)
     end function adaptive_integrate
 
     subroutine swap(x,y)
@@ -233,7 +222,6 @@ module integration
         endif
 
     end subroutine qk21
-
 
     ! ==========================================================================
     ! qags routine from quadpack

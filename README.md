@@ -11,8 +11,7 @@ a different kind of evolution.
 
 ### Authors
 
-The lead developer of the code is Adam Freese.
-The code was developed with the input of
+The code developers are Adam Freese (lead developer),
 Daniel Adamiak, Ian Cloët, Jianwei Qiu, Nobuo Sato and Marco Zaccheddu.
 
 The package contains several Fortran90 codes that were previously
@@ -35,13 +34,12 @@ which supported the creation of this code.
 # Installation
 
 The package can be installed using pip.
-If you're in the main package directory
+To install, navigate to the main package directory
 (the one containing `pyproject.toml`),
-you just need to run:
+and run:
 ```
 pip install .
 ```
-to install.
 
 ### Dependencies
 
@@ -56,7 +54,24 @@ but not to install or run tiktaalik itself.
 
 See `examples/examples.py` for examples of usage.
 
+### Limitations
+
+There are lower limits to the skewness (xi) at which tiktaalik can be trusted:
+- Leading-order (LO) evolution is numerically stable down to xi=3e-6
+- Next-to-leading order (NLO) evolution is numerically stable down to xi=2e-5
+One must use `grid_type=2` for small xi values such as these.
+
+Additionally, the GK model code provided with the package
+is numerically stable down to xi=5e-3
+
 # Recent updates
+
+### May 13, 2025
+
+The adaptive integration was simplified, and NLO evolution is trustworthy
+to smaller xi values than previously.
+NLO evolution is now trustworthy down to xi=2e-5.
+(LO is trustworthy down to xi=3e-6.)
 
 ### May 10, 2025
 
@@ -89,7 +104,8 @@ The log-linear-log spacing is recommended for xi below 0.1.
 Either spacing is acceptable for 0.1 < xi < 0.2, provided nx is large enough.
 
 The numerical methods used by tiktaalik are unstable when xi is too small.
-The minimum xi value you should use with tiktaalik is 0.005.
+~~The minimum xi value you should use with tiktaalik is 0.005.~~
+(*Edit: lower xi values now accessible*)
 By contrast, there is no maximum; tiktaalik is reliable all the way up to xi=1.
 
 Since tiktaalik defaults to linear spacing and leading order,

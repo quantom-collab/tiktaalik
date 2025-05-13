@@ -15,10 +15,15 @@ build.verbose = true
 
 [project]
 name = "tiktaalik"
-version = "0.3.0"
+version = "0.3.1"
 description = "Finite element code for evolution of generalized parton distributions"
 authors = [
-  {name = "Adam Freese", email = "afreese@jlab.org"}
+  {name = "Adam Freese", email = "afreese@jlab.org"},
+  {name = "Daniel Adamiak"},
+  {name = "Ian Cloët"},
+  {name = "Jianwei Qiu"},
+  {name = "Nobuo Sato"},
+  {name = "Marco Zaccheddu"}
 ]
 maintainers = [
   {name = "Adam Freese", email = "afreese@jlab.org"}
