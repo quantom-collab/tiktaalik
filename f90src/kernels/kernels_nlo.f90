@@ -13,7 +13,8 @@
 !
 ! About this module:
 !
-! 1.) TODO
+! 1.) This file essentially encodes Eqs. (177) - (1855) of BFM, with the auxiliary
+! equations (76) - (78) and (174) contained in the kernels_common module.
 !
 ! 2.) Stuff independent of the number of active flavors (nfl) and linear in nfl
 ! have been separated.
@@ -27,8 +28,6 @@ module kernels_nlo
   private
 
   integer,  parameter, private :: dp = kind(1d0)
-
-  !real(dp), parameter, private :: eps = 1e-9_dp
 
   public :: KV1_NSp_pls, KV1_NSp_cst, KV1_NSp_pls_nfl, KV1_NSp_cst_nfl, &
       & KV1_NSm_pls, KV1_NSm_cst, KV1_NSm_pls_nfl, KV1_NSm_cst_nfl, &
@@ -119,12 +118,6 @@ module kernels_nlo
         real(dp) :: QQf, QQfbar, QQh, QQhbar, beta0
         real(dp) :: piece1, piece2, piece3, piece4
         K = 0.0_dp
-        ! Some conditions to avoid nans
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         ! Auxiliary quantities
         QQf    = QQ_f_a(X   ,Y)    + QQ_f_b(X   ,Y   )
         QQfbar = QQ_f_a(Xbar,Ybar) + QQ_f_b(Xbar,Ybar)
@@ -224,12 +217,6 @@ module kernels_nlo
         !
         real(dp) :: QQf, QQfbar, QQh, QQhbar, beta0
         K = 0.0_dp
-        ! Some conditions to avoid nans
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         ! Auxiliary quantities
         QQf    = QQ_f_a(X   ,Y)    + QQ_f_b(X   ,Y   )
         QQfbar = QQ_f_a(Xbar,Ybar) + QQ_f_b(Xbar,Ybar)
@@ -342,12 +329,6 @@ module kernels_nlo
         K = 0.0_dp
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         ! Terms that contribute
         QGfV    = -QG_f_a(X,Y) - 2.*QG_f_c(X,Y)
         QGfA    = -QG_f_a(X,Y)
@@ -413,12 +394,6 @@ module kernels_nlo
         K = 0.0_dp
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         ! Terms that contribute
         QGfV    = -QG_f_a(X,Y) - 2.*QG_f_c(X,Y)
         QGfA    = -QG_f_a(X,Y)
@@ -485,12 +460,6 @@ module kernels_nlo
         K = 0.0_dp
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         ! The order 1 part of beta0
         beta0 = -11./3.*CA
         ! Terms that contribute
@@ -565,12 +534,6 @@ module kernels_nlo
         K = 0.0_dp
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         ! The order 1 part of beta0
         beta0 = -11./3.*CA
         ! Terms that contribute
@@ -646,12 +609,6 @@ module kernels_nlo
         K = 0.0_dp
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         ! The order nfl part of beta0
         beta0 = 4./3.*TF
         ! Terms that contribute
@@ -693,12 +650,6 @@ module kernels_nlo
         K = 0.0_dp
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         ! The order nfl part of beta0
         beta0 = 4./3.*TF
         ! Terms that contribute
@@ -766,12 +717,6 @@ module kernels_nlo
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
         K = 0.0_dp
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         beta0 = -11./3.*CA
         ! Terms that contribute
         GGfV    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   ) + 2.*GG_f_C(X   ,Y   )
@@ -853,12 +798,6 @@ module kernels_nlo
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
         K = 0.0_dp
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         beta0 = -11./3.*CA
         ! Terms that contribute
         GGfA    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   )
@@ -941,12 +880,6 @@ module kernels_nlo
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
         K = 0.0_dp
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         beta0 = 4./3.*TF
         ! Terms that contribute
         GGfV    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   ) + 2.*GG_f_C(X   ,Y   )
@@ -1021,12 +954,6 @@ module kernels_nlo
         Xbar = 1.0_dp - X
         Ybar = 1.0_dp - Y
         K = 0.0_dp
-        ! Some conditions to avoid nans and instability
-        !if(abs(X-Y)  < eps) return
-        !if(abs(Y)    < eps) return
-        !if(abs(Ybar) < eps) return
-        !if(abs(X)    < eps) return
-        !if(abs(Xbar) < eps) return
         beta0 = 4./3.*TF
         ! Terms that contribute
         GGfA    = 2.*GG_f_a(X   ,Y   ) + GG_f_b(X   ,Y   )
