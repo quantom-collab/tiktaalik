@@ -56,6 +56,12 @@ module gk
   ! Misc
   real(dp), parameter, private :: kappa_s = 1.68_dp ! Eq. (20)
 
+  ! ad hoc multiplicative factors to ensure normalizations are exact,
+  ! to an absurd number of decimal points
+  real(dp), parameter, private :: Nu = 1.0089593_dp
+  real(dp), parameter, private :: Nd = 0.9964662_dp
+  real(dp), parameter, private :: Ng = 1.0298697_dp
+
   ! Htilde-type GPDs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ! from Table 2 of Kroll:2012sm
   ! using Q = Q0, since the code does evolution
@@ -113,21 +119,21 @@ module gk
         real(dp), intent(in) :: x, xi, t
         real(dp) :: H
         !
-        H = H_n2(x, xi, t, Cg, a0_sea-1.0_dp, ap_sea, 1.0_dp)
+        H = Ng * H_n2(x, xi, t, Cg, a0_sea-1.0_dp, ap_sea, 1.0_dp)
     end function Hg
 
     function Hu_val(x, xi, t) result(H)
         real(dp), intent(in) :: x, xi, t
         real(dp) :: H
         !
-        H = H_n1(x, xi, t, Cu, a0_val, ap_val)
+        H = Nu * H_n1(x, xi, t, Cu, a0_val, ap_val)
     end function Hu_val
 
     function Hd_val(x, xi, t) result(H)
         real(dp), intent(in) :: x, xi, t
         real(dp) :: H
         !
-        H = H_n1(x, xi, t, Cd, a0_val, ap_val)
+        H = Nd * H_n1(x, xi, t, Cd, a0_val, ap_val)
     end function Hd_val
 
     function Hu_sea(x, xi, t) result(H)
