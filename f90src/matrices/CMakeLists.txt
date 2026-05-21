@@ -1,6 +1,7 @@
 set(localfiles
   "matrices_common"
   "matrices_evolution"
+  "matrices_mellin"
   "matrices_wilson"
   )
 

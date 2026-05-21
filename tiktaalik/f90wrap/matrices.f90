@@ -9,6 +9,7 @@ module dummy
   use gridspace
   use matrices_common
   use matrices_evolution
+  use matrices_mellin
   use matrices_wilson
   use pixelation
 
@@ -281,5 +282,15 @@ module dummy
         !
         C = CtilG_dvcs(nxi, nx, nQ2, l_nlo)
     end subroutine dvcs_ctilg_wrap
+    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ! Mellin matrices
+
+    subroutine mellin_wrap(nx, nxi, s, M)
+        integer,  parameter   :: dp = kind(1d0)
+        integer,  intent(in)  :: nx, nxi, s
+        real(dp), intent(out) :: M(nxi, nx)
+        !
+        call make_mellin_matrix(nx, nxi, s, M)
+    end subroutine mellin_wrap
 
 end module dummy

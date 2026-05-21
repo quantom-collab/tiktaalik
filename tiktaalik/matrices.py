@@ -385,6 +385,16 @@ def dvcs_Ctilg(nlo=False):
     return C
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Mellin moments
+
+def mellin(s):
+    # TODO: docstring
+    nx  = f90src.get_nx_wrap()
+    nxi = f90src.get_nxi_wrap()
+    M = f90src.mellin_wrap(nx, nxi, s)
+    return M
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Q2 related methods
 
 def Q2space(Q2i, Q2f, nQ2):
@@ -424,26 +434,26 @@ def get_nfl(Q2):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # to deprecate
 
-def pixelspace(nx, xi=0.5, grid_type=1):
-    # TODO: replace by returning cached x space
-    ''' The x space used by tiktaalik.
-    1. grid_type=1, linear grid (default)
-       The x values are the central values of nx intervals evenly dividing
-       the domain [-1,1]. For instance, if nx=4, then [-1,1] is divided into the
-       intervals [-1,-0.5], [-0.5,0], [0,0.5] and [0.5,1]. The midpoints of these
-       are -0.75, -0.25, 0.25 and 0.75. These four midpoints are used as x values.
-       Independent of xi.
-    2. grid_type=2, log-linear-log
-       x is broken down into the two DGLAP regions (x < -xi and x > xi) and the
-       ERBL region (-xi < x < xi). nx/4 points are placed in each of the DGLAP
-       regions, and are geometrically spaced, more closely around the x=-xi or
-       x=xi endpoint. The other nx/2 points are linearly spaced in the ERBL region.
-       The placement of the points in each region is done using midpoints
-       (geometric rather than arithmetic in the DGLAP region) of interals,
-       similarly to the linear grid.
-    '''
-    x = f90src.pixelspace_wrap(nx, xi, grid_type)
-    return x
+#def pixelspace(nx, xi=0.5, grid_type=1):
+#    # TODO: replace by returning cached x space
+#    ''' The x space used by tiktaalik.
+#    1. grid_type=1, linear grid (default)
+#       The x values are the central values of nx intervals evenly dividing
+#       the domain [-1,1]. For instance, if nx=4, then [-1,1] is divided into the
+#       intervals [-1,-0.5], [-0.5,0], [0,0.5] and [0.5,1]. The midpoints of these
+#       are -0.75, -0.25, 0.25 and 0.75. These four midpoints are used as x values.
+#       Independent of xi.
+#    2. grid_type=2, log-linear-log
+#       x is broken down into the two DGLAP regions (x < -xi and x > xi) and the
+#       ERBL region (-xi < x < xi). nx/4 points are placed in each of the DGLAP
+#       regions, and are geometrically spaced, more closely around the x=-xi or
+#       x=xi endpoint. The other nx/2 points are linearly spaced in the ERBL region.
+#       The placement of the points in each region is done using midpoints
+#       (geometric rather than arithmetic in the DGLAP region) of interals,
+#       similarly to the linear grid.
+#    '''
+#    x = f90src.pixelspace_wrap(nx, xi, grid_type)
+#    return x
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Internal helper routines
