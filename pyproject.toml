@@ -32,7 +32,8 @@ readme = "README.md"
 license = {file = "LICENSE"}
 dependencies = [
   "matplotlib",
-  "numpy"
+  "numpy",
+  "scipy"
 ]
 
 [project.urls]

@@ -87,7 +87,7 @@ def get_nQ2():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Methods for the user to set x, xi and Q2 grids
 
-def set_x_xi_grids(nx, xi, grid_type, lagrange_order=5):
+def set_x_xi_grids(nx, xi, grid_type, lagrange_order=6):
     ''' Set the x and xi grids used internally to construct kernel and evolution
     matrices.
     ------

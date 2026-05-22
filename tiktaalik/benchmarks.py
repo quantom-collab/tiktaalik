@@ -8,10 +8,12 @@ Methods to benchmark the accuracy of the finite element method.
 """
 
 import numpy as np
+from scipy.optimize import curve_fit
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from . import continuum, matrices, model, pars
+from . import continuum, matrices, model, pars, polynomiality
 
 mpl.rc('font',size=30,family='cmr10',weight='normal')
 mpl.rc('text',usetex=True)
@@ -160,6 +162,131 @@ def wilson_benchmark(
             )
     fig.patch.set_alpha(0)
     return fig
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Polynomiality benchmark(s)
+
+# TODO: clean up, make more systematic
+# - Need singlet/gluon tests too!
+# - Coefficients as functions of t? (prolly in polynomiality module)
+# - Probably separate plot(s) for the coefficients
+# - Maybe nx dependence of mean residual to study how it's a discretization artifact
+
+
+##def poly(x, N, c):
+##    # TODO: clean up...
+##    ff = [ c[i]*x**i for i in range(N+1) ]
+##    # What if I force polynomial to be even?
+##    for i in range(N+1):
+##        if( 2*(i//2)!=i ):
+##            ff[i] = 0
+##    return sum(ff)
+##
+##def fit_polynomial(xx, yy, Nmax):
+##    # TODO: clean up...
+##    f = lambda x, *p0: poly(x, Nmax, p0)
+##    print(Nmax)
+##    c, cov = curve_fit(f, xx, yy, p0 = [0. for _ in range(Nmax+1)])
+##    return c
+
+def polynomiality_test_ns(grid_type=2, ns=1, force_even=True):
+    # x/xi grids
+    nx = 81
+    nxi = 80
+    if(grid_type==1):
+        xi = np.linspace(0.2, 0.8, nxi)
+    else:
+        #xi = np.geomspace(1e-4, 1-1e-4, nxi)
+        xi = np.linspace(1e-2, 1-1e-2, nxi)
+    matrices.set_x_xi_grids(nx, xi, grid_type)
+    x = matrices.get_x_grid()
+    # Q2 grid
+    Q2 = np.geomspace(4, 17, 11)
+    matrices.set_Q2_grid(Q2)
+    # Initial and evolved GPDs
+    H0 = (model.Hu(x, xi, 0)[:,:,0] + model.Hu(-x, xi, 0)[:,:,0])/2
+    matrices.do_lo_evolution()
+    Mev1 = matrices.matrix_VNS(ns_type=-1)
+    matrices.do_nlo_evolution()
+    Mev2 = matrices.matrix_VNS(ns_type=-1)
+    H1 = np.einsum('xyzq,yz->xzq', Mev1, H0)[:,:,-1]
+    H2 = np.einsum('xyzq,yz->xzq', Mev2, H0)[:,:,-1]
+    # Stuff from polynomiality module
+    data0_sets = []
+    data1_sets = []
+    data2_sets = []
+    for i in range(ns):
+        s = 1 + 2*i
+        data0_sets += [ polynomiality.get_polynomial(H0, s, force_even=force_even) ]
+        data1_sets += [ polynomiality.get_polynomial(H1, s, force_even=force_even) ]
+        data2_sets += [ polynomiality.get_polynomial(H2, s, force_even=force_even) ]
+    # Set up plot ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    nrows, ncols = 3, ns
+    fig, axes = plt.subplots(
+            nrows, ncols,
+            gridspec_kw={'height_ratios': [3,1,1]},
+            figsize=(8*ncols,13),
+            layout = 'constrained'
+            )
+    if(ns==1):
+        axes = axes[:,np.newaxis]
+    # Loop over s values
+    for i in range(ns):
+        # Stuff from polynomiality fits
+        P0_raw = data0_sets[i]['raw polynomial']
+        P0_fit = data0_sets[i]['fit polynomial']
+        P1_raw = data1_sets[i]['raw polynomial']
+        P1_fit = data1_sets[i]['fit polynomial']
+        P2_raw = data2_sets[i]['raw polynomial']
+        P2_fit = data2_sets[i]['fit polynomial']
+        P0_res = P0_raw - P0_fit
+        P1_res = P1_raw - P1_fit
+        P2_res = P2_raw - P2_fit
+        c0 = data0_sets[i]['c']
+        c1 = data1_sets[i]['c']
+        c2 = data2_sets[i]['c']
+        n = data0_sets[i]['n']
+        # TODO: errors
+        # Plot raw moments
+        axes[0,i].plot(xi, P0_raw, 'o',  label=r'Initial', color='tab:blue')
+        axes[0,i].plot(xi, P1_raw, 'x',  label=r'LO',      color='tab:orange')
+        axes[0,i].plot(xi, P2_raw, '+',  label=r'NLO',     color='tab:green')
+        # Plot polynomial fits
+        axes[0,i].plot(xi, P0_fit, '-',                    color='tab:blue')
+        axes[0,i].plot(xi, P1_fit, '--',                   color='tab:orange')
+        axes[0,i].plot(xi, P2_fit, '-.',                   color='tab:green')
+        # Plot residuals
+        axes[1,i].plot(xi, P0_res, 'o',  label=r'Initial', color='tab:blue')
+        axes[1,i].plot(xi, P1_res, 'x',  label=r'LO',      color='tab:orange')
+        axes[1,i].plot(xi, P2_res, '+',  label=r'NLO',     color='tab:green')
+        # Plot the polynomial coefficients
+        axes[2,i].plot(n, c0, 'o',  label=r'Initial', color='tab:blue')
+        axes[2,i].plot(n, c1, 'x',  label=r'LO',      color='tab:orange')
+        axes[2,i].plot(n, c2, '+',  label=r'NLO',     color='tab:green')
+    # Finish up plot decorations
+    axes[0,0].set_ylabel(r'$\mathcal{M}(s,\xi)$')
+    axes[1,0].set_ylabel(r'Residuals')
+    axes[2,0].set_ylabel(r'$A_{s,n}$')
+    for i in range(ns):
+        axes[0,i].get_xaxis().set_visible(False)
+        axes[1,i].set_xlabel(r'$\xi$')
+        axes[2,i].set_xlabel(r'$n$')
+        #if(grid_type==2):
+        #    axes[0,i].set_xscale('log')
+        #    axes[1,i].set_xscale('log')
+    bbox = dict(facecolor='#f8f8f8', alpha=0.76, edgecolor='gray', boxstyle='round,pad=0.2')
+    for i in range(ns):
+        axes[0,i].annotate(
+                r'$\mathbf{s='+'{:d}'.format(2*i+1)+r'}$', xy=(0.03,0.05), xycoords='axes fraction',
+                bbox=bbox
+                )
+    legend = axes[0,0].legend(prop = { 'size' : 26 })
+    legend.get_frame().set_facecolor('#f8f8f8')
+    fig.patch.set_alpha(0)
+    return fig
+
+
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Auxiliary functions
