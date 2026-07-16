@@ -418,7 +418,14 @@ module kernels_nlo
         X2 = 0.5*(1.-x/xi)
         Y1 = 0.5*(1.+y/xi)
         Y2 = 0.5*(1.-y/xi)
-        K = KA1_qG_half(X1,Y1) - KA1_qG_half(X2,Y2)
+        ! Hack fix (TODO clean up!)
+        if(X1==0.0_dp) then
+          K = KA1_qG_half(-epsilon/xi,Y1) - KA1_qG_half(X2+epsilon/xi,Y2)
+        elseif(X2==0.0_dp) then
+          K = KA1_qG_half(X1+epsilon/xi,Y1) - KA1_qG_half(-epsilon/xi,Y2)
+        else
+          K = KA1_qG_half(X1,Y1) - KA1_qG_half(X2,Y2)
+        endif
         K = 0.5*K/xi
         K = K / (2.*xi) ! Eq. (15) of BFM
     end function KA1_qG_reg

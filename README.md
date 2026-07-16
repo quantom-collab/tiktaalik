@@ -18,7 +18,8 @@ The package contains several Fortran90 codes that were previously
 developed by other authors (e.g., integration methods and special functions).
 Attributions to the original authors are present in the files containing these codes.
 
-Helpful suggestions were additionally provided by Pi-Yueh Chuang and Sylvester Joosten.
+Helpful suggestions were provided by Pi-Yueh Chuang and Sylvester Joosten.
+Extensive testing and quality control were performed by Eric Moffat.
 
 ## QuantOm Collaboration
 
@@ -67,7 +68,7 @@ is numerically stable down to xi=5e-3
 
 # Recent updates
 
-## May XX, 2026
+## ???? XX, 2026
 
 (TODO)
 
