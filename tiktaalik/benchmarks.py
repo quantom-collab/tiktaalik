@@ -23,7 +23,15 @@ plt.rcParams["axes.formatter.use_mathtext"] = True
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Evolution shift benchmark
 
-def shift_benchmark(key='NS', xi=0.1, nx=81, nlo=False, ns_type=1, grid_type=2):
+def shift_benchmark(
+        key='NS',
+        xi=0.1,
+        nx=81,
+        pol=False,
+        nlo=False,
+        ns_type=1,
+        grid_type=2
+        ):
     ''' Benchmark of the shift induced by a kernel on the right-hand side of the
     GPD evolution equation.
     ------
@@ -39,6 +47,8 @@ def shift_benchmark(key='NS', xi=0.1, nx=81, nlo=False, ns_type=1, grid_type=2):
             number of x points
             if grid_type=2, then using one more than a multiple of four will
             give x=xi and x=-xi on the grid
+        - pol (bool)
+            True or helicity-dependent (A-type), False for helicity-independent (V-type)
         - nlo (bool)
             True or NLO evolution, False for LO evolution
         - ns_type (int)
@@ -55,15 +65,15 @@ def shift_benchmark(key='NS', xi=0.1, nx=81, nlo=False, ns_type=1, grid_type=2):
     # Retrieve x grid
     x_pixel = matrices.get_x_grid()
     # Retrieve kernel matrix (interpixel method)
-    K  = _get_kernel(key=key, ns_type=ns_type, nlo=nlo)
+    K  = _get_kernel(key=key, pol=pol, ns_type=ns_type, nlo=nlo)
     # Interpixel shift
-    H0 = _get_gpd(x_pixel, xi=xi, key=key)
+    H0 = _get_gpd(x_pixel, xi=xi, pol=pol, key=key)
     dH_pixel = np.einsum('ij,j->i', K[:,:,0], H0)
     # Continuum shift ("ground truth")
     x_truth = _make_continuum_x(xi)
-    dH_truth = _get_continuum_shift(x_truth, key=key, xi=xi, nlo=nlo, ns_type=ns_type)
+    dH_truth = _get_continuum_shift(x_truth, pol=pol, key=key, xi=xi, nlo=nlo, ns_type=ns_type)
     # Error
-    dH_truth_2 = _get_continuum_shift(x_pixel, key=key, xi=xi, nlo=nlo, ns_type=ns_type)
+    dH_truth_2 = _get_continuum_shift(x_pixel, pol=pol, key=key, xi=xi, nlo=nlo, ns_type=ns_type)
     error = 100*abs(dH_pixel - dH_truth_2) / abs(dH_truth_2)
     # Set up the plot
     nrows, ncols = 2, 1
@@ -291,17 +301,27 @@ def polynomiality_test_ns(grid_type=2, ns=1, force_even=True):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Auxiliary functions
 
-def _get_kernel(key='NS', nfl=4, ns_type=1, nlo=False):
-    if(key=='NS'):
+def _get_kernel(key='NS', pol=False, nfl=4, ns_type=1, nlo=False):
+    if(key=='NS' and pol==False):
         K = matrices.kernel_VQQ(nfl=nfl, nlo=nlo, ns_type=ns_type)
-    elif(key=='qq'):
+    elif(key=='qq' and pol==False):
         K = matrices.kernel_VQQ(nfl=nfl, nlo=nlo, ns_type=0)
-    elif(key=='qg'):
+    elif(key=='qg' and pol==False):
         K = matrices.kernel_VQG(nfl=nfl, nlo=nlo)
-    elif(key=='gq'):
+    elif(key=='gq' and pol==False):
         K = matrices.kernel_VGQ(nfl=nfl, nlo=nlo)
-    elif(key=='gg'):
+    elif(key=='gg' and pol==False):
         K = matrices.kernel_VGG(nfl=nfl, nlo=nlo)
+    elif(key=='NS' and pol==True):
+        K = matrices.kernel_AQQ(nfl=nfl, nlo=nlo, ns_type=ns_type)
+    elif(key=='qq' and pol==True):
+        K = matrices.kernel_AQQ(nfl=nfl, nlo=nlo, ns_type=0)
+    elif(key=='qg' and pol==True):
+        K = matrices.kernel_AQG(nfl=nfl, nlo=nlo)
+    elif(key=='gq' and pol==True):
+        K = matrices.kernel_AGQ(nfl=nfl, nlo=nlo)
+    elif(key=='gg' and pol==True):
+        K = matrices.kernel_AGG(nfl=nfl, nlo=nlo)
     else:
         raise ValueError("Key "+key+" unrecognized.")
     return K
@@ -315,14 +335,20 @@ def _get_dvcs_coefficient(key='q', nlo=False):
         raise ValueError("Key "+key+" unrecognized.")
     return C
 
-def _get_gpd(x, xi=0.1, key='NS'):
+def _get_gpd(x, xi=0.1, pol=False, key='NS'):
     H = np.zeros(x.shape)
-    if(key=='NS'):
+    if(key=='NS' and pol==False):
         H = _ns_gpd(x, xi)
-    elif(key[1]=='g'):
+    elif(key[1]=='g' and pol==False):
         H = _gluon_gpd(x, xi)
-    elif(key[1]=='q'):
+    elif(key[1]=='q' and pol==False):
         H = _singlet_gpd(x, xi)
+    elif(key=='NS' and pol==True):
+        H = _ns_gpd_tilde(x, xi)
+    elif(key[1]=='g' and pol==True):
+        H = _gluon_gpd_tilde(x, xi)
+    elif(key[1]=='q' and pol==True):
+        H = _singlet_gpd_tilde(x, xi)
     else:
         raise ValueError("Key "+key+" unrecognized.")
     H[np.isnan(H)] = 0
@@ -341,17 +367,27 @@ def _get_gpd_dvcs(x, xi, t, key='q'):
     H[np.isinf(H)] = 0
     return H
 
-def _get_continuum_shift(x, key='NS', xi=0.1, Q2=pars.mc2, nlo=False, ns_type=1):
-    if(key=='NS'):
+def _get_continuum_shift(x, key='NS', pol=False, xi=0.1, Q2=pars.mc2, nlo=False, ns_type=1):
+    if(key=='NS' and pol==False):
         continuum_shift = continuum.shift_cNS(x, xi, Q2, nlo, ns_type)[:,0]
-    elif(key=='qq'):
+    elif(key=='qq' and pol==False):
         continuum_shift = continuum.shift_cQQ(x, xi, Q2, nlo)[:,0]
-    elif(key=='qg'):
+    elif(key=='qg' and pol==False):
         continuum_shift = continuum.shift_cQG(x, xi, Q2, nlo)[:,0]
-    elif(key=='gq'):
+    elif(key=='gq' and pol==False):
         continuum_shift = continuum.shift_cGQ(x, xi, Q2, nlo)[:,0]
-    elif(key=='gg'):
+    elif(key=='gg' and pol==False):
         continuum_shift = continuum.shift_cGG(x, xi, Q2, nlo)[:,0]
+    elif(key=='NS' and pol==True):
+        continuum_shift = continuum.shift_cNS_tilde(x, xi, Q2, nlo, ns_type)[:,0]
+    elif(key=='qq' and pol==True):
+        continuum_shift = continuum.shift_cQQ_tilde(x, xi, Q2, nlo)[:,0]
+    elif(key=='qg' and pol==True):
+        continuum_shift = continuum.shift_cQG_tilde(x, xi, Q2, nlo)[:,0]
+    elif(key=='gq' and pol==True):
+        continuum_shift = continuum.shift_cGQ_tilde(x, xi, Q2, nlo)[:,0]
+    elif(key=='gg' and pol==True):
+        continuum_shift = continuum.shift_cGG_tilde(x, xi, Q2, nlo)[:,0]
     else:
         raise ValueError("Key "+key+" unrecognized.")
     return continuum_shift
@@ -378,6 +414,23 @@ def _gluon_gpd(x, xi):
 
 def _gluon_gpd_with_t(x, xi,t):
     return model.Hg(x,xi,t)
+
+def _ns_gpd_tilde(x, xi):
+    T3 = model.Hu_tilde(x,xi,0) - model.Hd_tilde(x,xi,0)
+    T3 = T3 + np.flip(T3, axis=0)
+    return T3[:,0,0]
+
+def _singlet_gpd_tilde(x, xi):
+    Sigma = model.Hu_tilde(x,xi,0) + model.Hd_tilde(x,xi,0)
+    Sigma = Sigma - np.flip(Sigma, axis=0)
+    return Sigma[:,0,0]
+
+def _gluon_gpd_tilde(x, xi):
+    # Sicne Hg_tilde=0 in GK model, need something non-zero
+    # with the right symmetries as a stand-in for shift tests...
+    G = model.Hu_tilde(x,xi,0) + model.Hd_tilde(x,xi,0)
+    G = G + np.flip(G, axis=0)
+    return G[:,0,0]
 
 def _dvcs_quark_combo(x, xi, t):
     H = (

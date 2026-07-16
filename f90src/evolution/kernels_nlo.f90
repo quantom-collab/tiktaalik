@@ -261,7 +261,7 @@ module kernels_nlo
     end function KV1_qq_half_nfl
 
     function KV1_qq_reg(x, y, xi) result(K)
-        ! Note: the singelt QQ kernel is the plus-type NS kernel plus this!
+        ! Note: the singlet QQ kernel is the plus-type NS kernel plus this!
         real(dp), intent(in) :: x, y, xi
         real(dp) :: K
         !
@@ -300,7 +300,7 @@ module kernels_nlo
     end function KV1_qq_half_sin
 
     function KA1_qq_reg(x, y, xi) result(K)
-        ! Note: the singelt QQ kernel is the minus-type NS kernel plus this!
+        ! Note: the singlet QQ kernel is the minus-type NS kernel plus this!
         real(dp), intent(in) :: x, y, xi
         real(dp) :: K
         !

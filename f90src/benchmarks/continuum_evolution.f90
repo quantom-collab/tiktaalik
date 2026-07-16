@@ -9,6 +9,7 @@ module continuum_evolution
   use alpha_qcd,     only: get_alpha_QCD, get_neff
   use integration,   only: adaptive_integrate
   use kernels_common
+  use kernels_lo
   use kvlo4tests
 
   implicit none
@@ -16,12 +17,18 @@ module continuum_evolution
 
   integer,  parameter, private :: dp = kind(1d0)
 
-  public :: continuum_shift_QQ, continuum_shift_QG, continuum_shift_GQ, continuum_shift_GG
+  public :: &
+      ! V-type
+      & continuum_shift_QQ, continuum_shift_QG, &
+      & continuum_shift_GQ, continuum_shift_GG, &
+      ! A-type
+      & continuum_shift_QQ_tilde, continuum_shift_QG_tilde, &
+      & continuum_shift_GQ_tilde, continuum_shift_GG_tilde
 
   contains
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ! Public methods for testing
+    ! Continuum shifts: helicity-independent
 
     function continuum_shift_QQ(func, x, xi, Q2, nlo, i_ns_type) result(shift)
         real(dp), external   :: func
@@ -32,7 +39,7 @@ module continuum_evolution
         !
         real(dp) :: S1, S2, al2pi
         al2pi = get_alpha_QCD(Q2) / (2.*pi)
-        S1 = convolve(func, zero_func, KV0_QQ_pls, KV0_QQ_cst, x, xi)
+        S1 = convolve(func, zero_func, K0_QQ_pls, K0_QQ_cst, x, xi)
         S2 = 0.0_dp
         if(nlo) then
           select case(i_ns_type)
@@ -94,6 +101,81 @@ module continuum_evolution
         endif
         shift = al2pi*S1 + al2pi**2*S2
     end function continuum_shift_GG
+
+    ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ! Continuum shifts: helicity-dependent
+
+    function continuum_shift_QQ_tilde(func, x, xi, Q2, nlo, i_ns_type) result(shift)
+        real(dp), external   :: func
+        real(dp), intent(in) :: x, xi, Q2
+        logical,  intent(in) :: nlo
+        integer,  intent(in) :: i_ns_type
+        real(dp) :: shift
+        !
+        real(dp) :: S1, S2, al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        S1 = convolve(func, zero_func, K0_QQ_pls, K0_QQ_cst, x, xi)
+        S2 = 0.0_dp
+        if(nlo) then
+          select case(i_ns_type)
+          case(1)
+            S2 = convolve(func, zero_func, tKA1_NSp_pls, tKA1_NSp_cst, x, xi)
+          case(-1)
+            S2 = convolve(func, zero_func, tKA1_NSm_pls, tKA1_NSm_cst, x, xi)
+          case(0)
+            S2 = convolve(func, tKA1_QQ_reg, tKA1_NSp_pls, tKA1_NSp_cst, x, xi)
+          end select
+        endif
+        shift = al2pi*S1 + al2pi**2*S2
+    end function continuum_shift_QQ_tilde
+
+    function continuum_shift_QG_tilde(func, x, xi, Q2, nlo) result(shift)
+        real(dp), external   :: func
+        real(dp), intent(in) :: x, xi, Q2
+        logical,  intent(in) :: nlo
+        real(dp) :: shift
+        !
+        real(dp) :: S1, S2, al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        S1 = convolve(func, tKA0_QG_reg, zero_func, tKA0_QG_cst, x, xi)
+        S2 = 0.0_dp
+        if(nlo) then
+          S2 = convolve(func, tKA1_QG_reg, zero_func, zero_func, x, xi)
+        endif
+        shift = al2pi*S1 + al2pi**2*S2
+    end function continuum_shift_QG_tilde
+
+    function continuum_shift_GQ_tilde(func, x, xi, Q2, nlo) result(shift)
+        real(dp), external :: func
+        real(dp), intent(in) :: x, xi, Q2
+        logical,  intent(in) :: nlo
+        real(dp) :: shift
+        !
+        real(dp) :: S1, S2, al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        S1 = convolve(func, tKA0_GQ_reg, zero_func, zero_func, x, xi)
+        S2 = 0.0_dp
+        if(nlo) then
+          S2 = convolve(func, tKA1_GQ_reg, zero_func, zero_func, x, xi)
+        endif
+        shift = al2pi*S1 + al2pi**2*S2
+    end function continuum_shift_GQ_tilde
+
+    function continuum_shift_GG_tilde(func, x, xi, Q2, nlo) result(shift)
+        real(dp), external :: func
+        real(dp), intent(in) :: x, xi, Q2
+        logical,  intent(in) :: nlo
+        real(dp) :: shift
+        !
+        real(dp) :: S1, S2, al2pi
+        al2pi = get_alpha_QCD(Q2) / (2.*pi)
+        S1 = convolve(func, zero_func, tKA0_GG_pls, tKA0_GG_cst, x, xi)
+        S2 = 0.0_dp
+        if(nlo) then
+            S2 = convolve(func, zero_func, tKA1_GG_pls, tKA1_GG_cst, x, xi)
+        endif
+        shift = al2pi*S1 + al2pi**2*S2
+    end function continuum_shift_GG_tilde
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Continuous shifts
