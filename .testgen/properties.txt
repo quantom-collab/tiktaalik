@@ -1,0 +1,19 @@
+Properties the pipeline may suggest to the model for tiktaalik GPD evolution.
+Confirm class and method names against examples/examples.py before use.
+
+- Zero distance identity: evolving a distribution to the same scale returns the
+  input within tolerance. With matrix_VNS the Q2[0] slice is the identity
+  operator, and Evolver.evolveNS(...)[..., 0] returns the input.
+- Composition and transitivity: evolving Q0 to Q2 directly equals evolving Q0 to
+  Q1 then Q1 to Q2 within tolerance. This one relation catches a large class of
+  bugs.
+- Linearity: the evolution operator is linear in the input distribution.
+  Evolving a linear combination equals the linear combination of the evolved
+  inputs. Use random coefficients from Hypothesis.
+- Default settings golden master: with default linear spacing and leading order,
+  fixed inputs produce fixed outputs. Snapshot them within tolerance.
+- Valid range finiteness: within documented stable ranges (leading order down to
+  xi about 3e-6 with grid_type 2, the GK model down to xi 5e-3), outputs are
+  finite with no NaN or Inf. Do not assert correctness outside these ranges.
+- Matrix apply consistency: the Evolver and a directly built matrix over the same
+  Q2 grid agree within tolerance.
