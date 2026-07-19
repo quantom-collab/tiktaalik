@@ -96,14 +96,11 @@ def Q2space(Q2i, Q2f, nQ2):
     ''' Creates something that's mostly a geomspace,
     but injects any quark mass thresholds if they're present.
     '''
-    nThresh = int(Q2i < pars.mc2 and Q2f > pars.mc2) + int(Q2i < pars.mb2 and Q2f > pars.mb2)
-    Q2 = np.geomspace(Q2i, Q2f, nQ2-nThresh)
-    if(Q2i < pars.mc2 and Q2f > pars.mc2):
-        Q2 = np.append(Q2, pars.mc2)
-    if(Q2i < pars.mb2 and Q2f > pars.mb2):
-        Q2 = np.append(Q2, pars.mb2)
-    Q2 = np.sort(Q2)
-    return Q2
+    thresholds = [m2 for m2 in (pars.mc2, pars.mb2) if Q2i < m2 < Q2f]
+    Q2 = np.geomspace(Q2i, Q2f, nQ2 - len(thresholds))
+    for m2 in thresholds:
+        Q2 = np.append(Q2, m2)
+    return np.sort(Q2)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Q2 related methods
