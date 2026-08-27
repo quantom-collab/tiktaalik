@@ -1,7 +1,12 @@
 # Function to generate an f2py module and add it to a list of modules to install
 function(gen_f2pymod f2py_module_name module_list)
   set(fortran_src_file "${CMAKE_CURRENT_SOURCE_DIR}/${f2py_module_name}.f90")
-  set(generated_module_file ${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_name}${PYTHON_EXTENSION_MODULE_SUFFIX})
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.27")
+    #Requires explicit "." and ".so" that it didn't used to
+    set(generated_module_file "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_name}.${Python_SOABI}.so")
+  else()
+    set(generated_module_file ${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_name}${PYTHON_EXTENSION_MODULE_SUFFIX})
+  endif()
   # Custom command to execture f2py, since cmake's built-in methods don't seem to work.
   add_custom_command(
     OUTPUT ${generated_module_file}
