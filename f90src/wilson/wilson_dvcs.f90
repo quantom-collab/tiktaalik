@@ -60,21 +60,21 @@ module wilson_dvcs
         real(dp), intent(in) :: xi
         real(dp) :: w
         !
-        w = -log((1.+xi)/(1.-xi))
+        w = log((1.+xi)/(1.-xi))
     end function re_Ctilq0_dvcs_cst
 
     function re_Ctilq0_dvcs_sub(x,xi) result(w)
         real(dp), intent(in) :: x, xi
         real(dp) :: w
         !
-        w = -1./(xi-x)
+        w = 1./(xi-x)
     end function re_Ctilq0_dvcs_sub
 
     function im_Ctilq0_dvcs_cst(xi) result(w)
         real(dp), intent(in) :: xi
         real(dp) :: w
         !
-        w = -pi
+        w = pi
     end function im_Ctilq0_dvcs_cst
 
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,7 +101,7 @@ module wilson_dvcs
         real(dp), intent(in) :: xi
         real(dp) :: w
         !
-        w = CF*(log(0.5*(1.+xi)/xi)**3 - log(0.5*(1.-xi)/xi)**3)/3. 
+        w = CF*(log(0.5*(1.+xi)/xi)**3 - log(0.5*(1.-xi)/xi)**3)/3.
         w = w + CF*pi**2*log(0.5*(1.-xi)/xi)
         w = w - 9.*CF*re_Cq0_dvcs_cst(xi)
     end function re_Cq1_dvcs_cst
@@ -117,14 +117,14 @@ module wilson_dvcs
         real(dp), intent(in) :: x, xi
         real(dp) :: w
         !
-        w = -2.*pi*abslog(0.5*(xi-x)/xi)/(xi-x) * theta_step(x-xi)
+        w = -2*CF.*pi*abslog(0.5*(xi-x)/xi)/(xi-x) * theta_step(x-xi)
     end function im_Cq1_dvcs_sub
 
     function im_Cq1_dvcs_cst(xi) result(w)
         real(dp), intent(in) :: xi
         real(dp) :: w
         !
-        w = pi*(log2(0.5*(1.-xi)/xi) - pi**2/3.)
+        w = CF*pi*(log2(0.5*(1.-xi)/xi) - pi**2/3.)
         w = w - 9.*CF*im_Cq0_dvcs_cst(xi)
     end function im_Cq1_dvcs_cst
 
@@ -134,14 +134,14 @@ module wilson_dvcs
         real(dp), intent(in) :: x, xi
         real(dp) :: w
         !
-        w = CF * abslog(0.5*(xi-xi)/xi) / (xi+x)
+        w = -CF * abslog(0.5*(xi-x)/xi) / (xi+x)
     end function re_Ctilq1_dvcs_reg
 
     function re_Ctilq1_dvcs_sub(x,xi) result(w)
         real(dp), intent(in) :: x, xi
         real(dp) :: w
         !
-        w = -CF * log2(0.5*(xi-x)/xi)/(xi-x)
+        w = CF * log2(0.5*(xi-x)/xi)/(xi-x)
         w = w - 9.*CF*re_Ctilq0_dvcs_sub(x,xi)
     end function re_Ctilq1_dvcs_sub
 
@@ -149,8 +149,8 @@ module wilson_dvcs
         real(dp), intent(in) :: xi
         real(dp) :: w
         !
-        w = -CF*(log(0.5*(1.+xi)/xi)**3 - log(0.5*(1.-xi)/xi)**3)/3. 
-        w = w - CF*pi**2*log(0.5*(1.-xi)/xi)
+        w = CF*(log(0.5*(1.+xi)/xi)**3 - log(0.5*(1.-xi)/xi)**3)/3.
+        w = w + CF*pi**2*log(0.5*(1.-xi)/xi)
         w = w - 9.*CF*re_Ctilq0_dvcs_cst(xi)
     end function re_Ctilq1_dvcs_cst
 
@@ -158,21 +158,21 @@ module wilson_dvcs
         real(dp), intent(in) :: x, xi
         real(dp) :: w
         !
-        w = -CF * pi/(x+xi) * theta_step(x-xi)
+        w = CF * pi/(x+xi) * theta_step(x-xi)
     end function im_Ctilq1_dvcs_reg
 
     function im_Ctilq1_dvcs_sub(x,xi) result(w)
         real(dp), intent(in) :: x, xi
         real(dp) :: w
         !
-        w = 2.*pi*abslog(0.5*(xi-x)/xi)/(xi-x) * theta_step(x-xi)
+        w = -2.*pi*abslog(0.5*(xi-x)/xi)/(xi-x) * theta_step(x-xi)
     end function im_Ctilq1_dvcs_sub
 
     function im_Ctilq1_dvcs_cst(xi) result(w)
         real(dp), intent(in) :: xi
         real(dp) :: w
         !
-        w = -pi*(log2(0.5*(1.-xi)/xi) - pi**2/3.)
+        w = pi*(log2(0.5*(1.-xi)/xi) - pi**2/3.)
         w = w - 9.*CF*im_Ctilq0_dvcs_cst(xi)
     end function im_Ctilq1_dvcs_cst
 
@@ -188,8 +188,6 @@ module wilson_dvcs
         !
         w = 2.*TF/xi*abslog(0.5*(xi-x)/xi) / (xi+x) ! from log term
         w = w - 2*TF*log2(0.5*(xi-x)/xi) / (xi+x)**2 ! from log2 term
-        !!!w = 2.*TF*( (xi+x)/xi*abslog(0.5*(xi-x)/xi) - log2(0.5*(xi-x)/xi) ) / (xi+x)**2
-        ! confirmed; broken down further
     end function re_CG1_dvcs_reg
 
     function re_CG1_dvcs_sub(x,xi) result(w)
@@ -199,7 +197,6 @@ module wilson_dvcs
         !
         w = TF * 2./xi*abslog(0.5*(xi-x)/xi) / (xi-x) ! from log term
         w = w + TF * 8.*abslog(0.5*(xi+x)/xi) / (xi-x)**2 ! from log term
-        ! confirmed
     end function re_CG1_dvcs_sub
 
     function re_CG1_dvcs_cst(xi) result(w)
@@ -207,10 +204,8 @@ module wilson_dvcs
         real(dp), intent(in) :: xi
         real(dp) :: w
         !
-        w = TF/xi * ( log2(0.5*(1.+xi)/xi) - log2(0.5*(1.-xi)/xi) + pi**2 ) ! from log term (confirmed)
-        !w = w + TF/xi * 4. * ( log(0.5*(1.-xi)/xi)/(1.+xi) - log(0.5*(1.+xi)/xi)/(1.-xi) )
+        w = TF/xi * ( log2(0.5*(1.+xi)/xi) - log2(0.5*(1.-xi)/xi) + pi**2 ) ! from log term
         w = w + TF/xi * 8. * ( log(0.5*(1.-xi)/xi)/(1.+xi) - log(0.5*(1.+xi)/xi)/(1.-xi) ) ! from log term
-        ! found missing factor 2
     end function re_CG1_dvcs_cst
 
     function im_CG1_dvcs_reg(x,xi) result(w)
@@ -223,9 +218,7 @@ module wilson_dvcs
           w = w + 4.*pi * TF / (xi+x)**2 * abslog(0.5*(xi-x)/xi) ! from log2 term
           w = w - 2.*pi * TF / xi / (xi+x) ! from log term
           w = w - 8.*pi * TF / (xi+x)**2 ! from log term, but extra sign flip for tilde
-          !!!w = - 2. * pi * TF*( (xi+x)/xi + 4. - 2.*abslog(0.5*(xi-x)/xi) ) / (xi+x)**2
         endif
-        ! confirmed; broken down further
     end function im_CG1_dvcs_reg
 
     function im_CG1_dvcs_sub(x,xi) result(w)
@@ -234,7 +227,6 @@ module wilson_dvcs
         real(dp) :: w
         !
         w = - TF/xi * 2.*pi * theta_step(x-xi) / (xi-x) ! from log term
-        ! confirmed
     end function im_CG1_dvcs_sub
 
     function im_CG1_dvcs_cst(xi) result(w)
@@ -244,7 +236,6 @@ module wilson_dvcs
         !
         w = 2.*pi * TF/xi * log(0.5*(1.-xi)/xi) ! from log term
         w = w - TF/xi * 4.*pi ! from log term
-        ! confirmed
     end function im_CG1_dvcs_cst
 
     ! Axial type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -265,7 +256,6 @@ module wilson_dvcs
         !
         w = -TF * 2./xi*abslog(0.5*(xi-x)/xi) / (xi-x) ! from log term
         w = w + TF * 8.*abslog(0.5*(xi+x)/xi) / (xi-x)**2 ! from log term
-        ! confirmed
     end function re_CtilG1_dvcs_sub
 
     function re_CtilG1_dvcs_cst(xi) result(w)
