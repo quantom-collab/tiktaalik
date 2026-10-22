@@ -117,7 +117,7 @@ module wilson_dvcs
         real(dp), intent(in) :: x, xi
         real(dp) :: w
         !
-        w = -2*CF.*pi*abslog(0.5*(xi-x)/xi)/(xi-x) * theta_step(x-xi)
+        w = -2.*CF*pi*abslog(0.5*(xi-x)/xi)/(xi-x) * theta_step(x-xi)
     end function im_Cq1_dvcs_sub
 
     function im_Cq1_dvcs_cst(xi) result(w)
