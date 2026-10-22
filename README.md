@@ -20,6 +20,7 @@ Attributions to the original authors are present in the files containing these c
 
 Helpful suggestions were provided by Pi-Yueh Chuang and Sylvester Joosten.
 Extensive testing and quality control were performed by Eric Moffat.
+Additional quality control and bug fixes were given by John Terry.
 
 ## QuantOm Collaboration
 
